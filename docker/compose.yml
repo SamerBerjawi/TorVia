@@ -4,17 +4,22 @@
 # same /config volume (-> /config/torvia). Do the one-time step afterwards (see README):
 #   qBittorrent WebUI → Tools → Options → Web UI → "Use alternative WebUI" → Files location: /config/torvia
 #
+# It never blocks qBittorrent: if GitHub can't be reached it keeps what is installed and exits normally.
 # Update Torvia: re-deploy the stack (Portainer: "Update the stack" / Compose: docker compose up -d).
-# Pin a version: set TORVIA_VERSION=0.1.0 (default: latest).
+# Pin a version: set TORVIA_VERSION=0.1.1 (default: latest).
 #
-# Already have qBittorrent running? You do not need this file: download torvia.zip from the Releases page,
-# extract it into your qBittorrent config folder and point the WebUI at it. Same result.
+# Already have a qBittorrent compose file? Add the `torvia-install` service below and a `depends_on` on it
+# (see the qbittorrent service), pointing the volume at the same folder you mount as /config.
+# Already have qBittorrent running without Docker? You do not need this file: download torvia.zip from the
+# Releases page, extract it into your qBittorrent config folder and point the WebUI at it. Same result.
 services:
   torvia-install:
     image: alpine:3
     restart: "no"
     environment:
       TORVIA_VERSION: ${TORVIA_VERSION:-latest}
+      PUID: 1000 # same user/group as the qBittorrent service, so it can read the files
+      PGID: 1000
     volumes:
       - ./config:/config
     command:
@@ -25,16 +30,24 @@ services:
         if [ "$$TORVIA_VERSION" = latest ]; then URL="https://github.com/$$REPO/releases/latest/download/torvia.zip"
         else URL="https://github.com/$$REPO/releases/download/v$${TORVIA_VERSION#v}/torvia.zip"; fi
         cd /config
-        rm -rf .torvia-new && mkdir .torvia-new
-        wget -q -O .torvia-new/torvia.zip "$$URL"
-        unzip -q .torvia-new/torvia.zip -d .torvia-new
-        test -f .torvia-new/torvia/public/index.html && test -f .torvia-new/torvia/private/index.html
-        # Swap in one step: qBittorrent turns the alternative WebUI off if index.html is missing even briefly.
-        rm -rf torvia.old
-        [ -d torvia ] && mv torvia torvia.old
-        mv .torvia-new/torvia torvia
-        rm -rf .torvia-new torvia.old
-        echo "Torvia $$(cat torvia/version.json) installed in /config/torvia"
+        fetch() {
+          rm -rf .torvia-new && mkdir .torvia-new || return 1
+          for try in 1 2 3; do wget -q -T 30 -O .torvia-new/torvia.zip "$$URL" && break; [ "$$try" = 3 ] && return 1; sleep 5; done
+          unzip -q .torvia-new/torvia.zip -d .torvia-new || return 1
+          test -f .torvia-new/torvia/public/index.html && test -f .torvia-new/torvia/private/index.html
+        }
+        if fetch; then
+          chown -R "$$PUID:$$PGID" .torvia-new/torvia
+          # Swap in one step: qBittorrent turns the alternative WebUI off if index.html is missing even briefly.
+          rm -rf torvia.old
+          [ -d torvia ] && mv torvia torvia.old
+          mv .torvia-new/torvia torvia
+          rm -rf torvia.old
+          echo "Torvia $$(cat torvia/version.json) installed in /config/torvia"
+        else
+          echo "Could not download Torvia (offline?). Keeping what is installed; qBittorrent starts as usual."
+        fi
+        rm -rf .torvia-new
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest

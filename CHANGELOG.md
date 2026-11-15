@@ -4,6 +4,9 @@ All notable changes to Torvia are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+### Fixed
+- **`docker/compose.yml`:** the Torvia installer step no longer stops qBittorrent from starting when GitHub can't be reached (for example a NAS booting before its network is up). It retries, then keeps the installed version and exits cleanly. Files are now owned by the same user as qBittorrent.
+
 ## [0.1.1] - 2026-11-15
 
 Update notice, a resizable details panel in Paper, and layout fixes for the installed app and long file names.
