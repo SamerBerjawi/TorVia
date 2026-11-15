@@ -1,8 +1,12 @@
 name: Release
 
+# Publishing: bump "version" in package.json, commit, then push a matching tag:
+#   git tag v0.2.0 && git push origin v0.2.0
+# The workflow builds, tests, smoke-tests the archive exactly as a user installs it, then publishes.
 on:
   push:
     tags: ['v*']
+  workflow_dispatch: # manual run = dry run: builds and smoke-tests, never publishes
 
 permissions:
   contents: write
@@ -21,20 +25,49 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Tag must match package.json version
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           VERSION="v$(node -p "require('./package.json').version")"
           [ "$VERSION" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME != package.json $VERSION"; exit 1; }
       - run: pnpm check
       - run: pnpm package
+      - name: Smoke test the archive (unzip into a fresh qBittorrent, point the WebUI at it, run E2E)
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          RUN_E2E=1 bash e2e/smoke-release.sh dist/torvia.zip latest
       - name: Checksums
         working-directory: dist
-        run: sha256sum torvia-*.zip > SHA256SUMS.txt && cat SHA256SUMS.txt
-      - uses: actions/attest-build-provenance@v2
+        run: sha256sum torvia-*.zip torvia.zip > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Build provenance attestation
+        # Needs a public repository (or a plan with attestations); never block the release on it.
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v2
         with:
-          subject-path: dist/torvia-*.zip
+          subject-path: dist/torvia.zip
+      - name: Release notes
+        run: |
+          cat > dist/NOTES.md <<'NOTES'
+          ## Install
+          1. Download **torvia.zip** below and extract it. You get one folder, `torvia`, containing `public` and `private`.
+          2. Put that folder inside your qBittorrent folder (Docker/NAS: into the folder you mount as `/config`).
+          3. In qBittorrent: **Tools → Options → Web UI → Use alternative WebUI**, set **Files location** to the `torvia` folder (inside a container: `/config/torvia`), Apply, then reload the page.
+
+          Full steps, Docker/Portainer and updating: see `INSTALL.txt` inside the archive, or the README.
+          Requires qBittorrent 5.0 or newer. Verify downloads with `SHA256SUMS.txt`.
+          NOTES
       - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/torvia-*.zip dist/SHA256SUMS.txt \
-            --title "Torvia $GITHUB_REF_NAME" --generate-notes --prerelease
+          # Versions with a hyphen (0.2.0-rc.1) are pre-releases; plain versions become "Latest",
+          # which is what makes .../releases/latest/download/torvia.zip resolve.
+          PRE=""; case "$GITHUB_REF_NAME" in *-*) PRE="--prerelease";; esac
+          gh release create "$GITHUB_REF_NAME" dist/torvia.zip dist/torvia-*.zip dist/SHA256SUMS.txt \
+            --title "Torvia $GITHUB_REF_NAME" --notes-file dist/NOTES.md --generate-notes $PRE
+      - name: Keep the archive from dry runs
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: torvia-release-dry-run
+          path: dist/torvia*.zip

@@ -1,5 +1,6 @@
 // Writes a qBittorrent.conf for end-to-end tests: known WebUI credentials and Torvia as the
-// alternative WebUI. Usage: node e2e/qbt-config.mjs <profile-dir> <webui-root-inside-container>
+// alternative WebUI. Usage: node e2e/qbt-config.mjs <profile-dir> <webui-root-inside-container | none>
+// With `none` the alternative WebUI is left off (the state of a fresh qBittorrent, before the user points it at Torvia).
 // Password hash format (qBittorrent ≥ 4.2): @ByteArray(base64(salt):base64(PBKDF2-HMAC-SHA512, 100000 iters, 64 bytes)).
 import { pbkdf2Sync, randomBytes } from 'node:crypto'
 import { mkdirSync, writeFileSync } from 'node:fs'
@@ -27,9 +28,7 @@ Session\\QueueingSystemEnabled=true
 WebUI\\Port=8080
 WebUI\\Username=${E2E_USER}
 WebUI\\Password_PBKDF2="@ByteArray(${salt.toString('base64')}:${key.toString('base64')})"
-WebUI\\AlternativeUIEnabled=true
-WebUI\\RootFolder=${root}
-WebUI\\LocalHostAuth=true
+${root === 'none' ? '' : `WebUI\\AlternativeUIEnabled=true\nWebUI\\RootFolder=${root}\n`}WebUI\\LocalHostAuth=true
 WebUI\\HostHeaderValidation=false
 `,
 )

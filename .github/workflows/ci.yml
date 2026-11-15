@@ -61,3 +61,28 @@ jobs:
         timeout-minutes: 40
       - if: failure()
         run: docker logs torvia-qbt || true
+
+  package:
+    name: Release archive installs and works
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: torvia-dist
+          path: dist/torvia
+      - run: pnpm package
+      # Unzip into a fresh qBittorrent, point the WebUI at it exactly as a user would, and check it is served.
+      - run: bash e2e/smoke-release.sh dist/torvia.zip latest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: torvia-release-archive
+          path: dist/torvia*.zip
+          retention-days: 7

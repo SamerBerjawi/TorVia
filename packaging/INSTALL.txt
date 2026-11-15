@@ -1,0 +1,38 @@
+Torvia {{VERSION}} - alternative WebUI for qBittorrent
+=====================================================
+
+This folder ("torvia") IS the WebUI. It contains two sub-folders, public/ and private/.
+You do not need to run, build or install anything: qBittorrent serves these files itself.
+
+INSTALL (qBittorrent on Windows, macOS, Linux)
+  1. Put this whole "torvia" folder somewhere qBittorrent can read, for example next to its
+     configuration folder. Keep the folder name; do not move public/ or private/ out of it.
+  2. In qBittorrent open  Tools > Options > Web UI.
+  3. Tick  "Use alternative WebUI".
+  4. Set  "Files location"  (Root Folder) to the torvia folder, i.e. the folder that CONTAINS
+     public/ - for example  /home/me/.config/qBittorrent/torvia  or  C:\qBittorrent\torvia
+  5. Click Apply, then reload the WebUI page in your browser (hard refresh: Ctrl+F5).
+
+INSTALL (qBittorrent in Docker, Portainer, NAS such as UGREEN/Synology/QNAP)
+  1. Copy the "torvia" folder into the folder you mount as /config, so inside the container it is
+     /config/torvia   (any mounted path works, as long as qBittorrent can read it).
+  2. In the qBittorrent WebUI: Tools > Options > Web UI > Use alternative WebUI, and set the
+     Root Folder to the path AS SEEN INSIDE THE CONTAINER, e.g.  /config/torvia
+  3. Apply and reload the page.
+  Tip: if you cannot open the WebUI to change this (for example it is blank), stop the container,
+  open qBittorrent.conf and add under [Preferences]:
+        WebUI\AlternativeUIEnabled=true
+        WebUI\RootFolder=/config/torvia
+
+UPDATE
+  Extract the new archive NEXT TO the old folder, then swap the folder names. Do not delete files
+  inside the live folder one by one: if index.html disappears for a moment, qBittorrent switches
+  the alternative WebUI off. Then hard-refresh the browser.
+
+GO BACK TO THE DEFAULT WEBUI
+  Untick "Use alternative WebUI" (or remove WebUI\AlternativeUIEnabled from qBittorrent.conf).
+
+REQUIREMENTS
+  qBittorrent 5.0 or newer (WebAPI 2.11+). Older versions show a warning.
+
+More: https://github.com/{{REPO}}

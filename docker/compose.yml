@@ -1,0 +1,56 @@
+# qBittorrent + Torvia. Works with Docker Compose, Portainer (Stacks → Web editor) and NAS Docker apps (UGREEN, Synology, QNAP).
+#
+# What it does: before qBittorrent starts, a one-shot container downloads the Torvia release into the
+# same /config volume (-> /config/torvia). Do the one-time step afterwards (see README):
+#   qBittorrent WebUI → Tools → Options → Web UI → "Use alternative WebUI" → Files location: /config/torvia
+#
+# Update Torvia: re-deploy the stack (Portainer: "Update the stack" / Compose: docker compose up -d).
+# Pin a version: set TORVIA_VERSION=0.1.0 (default: latest).
+#
+# Already have qBittorrent running? You do not need this file: download torvia.zip from the Releases page,
+# extract it into your qBittorrent config folder and point the WebUI at it. Same result.
+services:
+  torvia-install:
+    image: alpine:3
+    restart: "no"
+    environment:
+      TORVIA_VERSION: ${TORVIA_VERSION:-latest}
+    volumes:
+      - ./config:/config
+    command:
+      - sh
+      - -ec
+      - |
+        REPO=SamerBerjawi/nuvora
+        if [ "$$TORVIA_VERSION" = latest ]; then URL="https://github.com/$$REPO/releases/latest/download/torvia.zip"
+        else URL="https://github.com/$$REPO/releases/download/v$${TORVIA_VERSION#v}/torvia.zip"; fi
+        cd /config
+        rm -rf .torvia-new && mkdir .torvia-new
+        wget -q -O .torvia-new/torvia.zip "$$URL"
+        unzip -q .torvia-new/torvia.zip -d .torvia-new
+        test -f .torvia-new/torvia/public/index.html && test -f .torvia-new/torvia/private/index.html
+        # Swap in one step: qBittorrent turns the alternative WebUI off if index.html is missing even briefly.
+        rm -rf torvia.old
+        [ -d torvia ] && mv torvia torvia.old
+        mv .torvia-new/torvia torvia
+        rm -rf .torvia-new torvia.old
+        echo "Torvia $$(cat torvia/version.json) installed in /config/torvia"
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    depends_on:
+      torvia-install:
+        condition: service_completed_successfully
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Etc/UTC
+      WEBUI_PORT: 8080
+    volumes:
+      - ./config:/config
+      - ./downloads:/downloads
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    restart: unless-stopped

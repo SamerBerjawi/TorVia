@@ -3,9 +3,44 @@
 A next-generation alternative WebUI for [qBittorrent](https://github.com/qbittorrent/qBittorrent).
 Static assets only — no backend, database or extra container. qBittorrent serves it and handles authentication.
 
-> **Status: early preview.** Sign in, live torrent list, filters, query language, details overview, three skins. Torrent actions, adding torrents, RSS, search and settings are on the roadmap.
+## Install
 
-## Features so far
+Torvia is just a folder of files. Download it, put it in your qBittorrent folder, point qBittorrent's WebUI at it. Nothing to build, run or configure beyond that. Requires **qBittorrent 5.0 or newer**.
+
+### Existing qBittorrent installation (Windows, macOS, Linux, NAS)
+
+1. Download **`torvia.zip`** from the [latest release](https://github.com/SamerBerjawi/nuvora/releases/latest) and extract it. You get one folder, `torvia`, containing `public` and `private`.
+2. Put that `torvia` folder anywhere qBittorrent can read (for example next to its configuration folder).
+3. In qBittorrent open **Tools → Options → Web UI** and tick **Use alternative WebUI**.
+4. Set **Files location** to the `torvia` folder, the one that *contains* `public`.
+5. Click **Apply** and reload the WebUI page (Ctrl+F5).
+
+### Docker, Portainer, UGREEN / Synology / QNAP
+
+The same three steps, with the folder inside the container's `/config` volume:
+
+1. Extract `torvia.zip` into the folder you mount as `/config` (so it is `/config/torvia` inside the container).
+2. WebUI → **Tools → Options → Web UI → Use alternative WebUI**, **Files location** = `/config/torvia` (the path *inside the container*).
+3. Apply and reload.
+
+**Prefer not to touch files?** [`docker/compose.yml`](docker/compose.yml) is a ready-made stack (qBittorrent + a one-shot job that downloads Torvia into `/config/torvia` before qBittorrent starts). In Portainer: *Stacks → Add stack → Web editor*, paste it, deploy. Re-deploying updates Torvia; set `TORVIA_VERSION=0.1.0` to pin one.
+
+Can't open the WebUI to change the setting? Stop qBittorrent and add this under `[Preferences]` in `qBittorrent.conf`:
+
+```
+WebUI\AlternativeUIEnabled=true
+WebUI\RootFolder=/config/torvia
+```
+
+### Updating and going back
+
+- **Update:** extract the new `torvia.zip` *next to* the old folder, then swap the two folder names (don't delete files one by one inside the live folder: qBittorrent switches the alternative WebUI off if `index.html` vanishes for a moment). Hard-refresh the browser afterwards.
+- **Back to the stock WebUI:** untick **Use alternative WebUI** (or remove `WebUI\AlternativeUIEnabled` from `qBittorrent.conf`).
+- **Verify a download:** compare with `SHA256SUMS.txt` from the release page.
+
+Every release archive is installed into a fresh qBittorrent and checked by CI before it is published (`e2e/smoke-release.sh`).
+
+## Features
 - **Three skins, each light & dark** (or follow the system): *Graphite* (sidebar + side details), *Paper* (desktop toolbar + bottom details), *Signal* (query-first console with grouped rows and live speed sparklines). Switch under **Appearance**.
 - Virtualised table for large libraries, sortable columns, multi-select (click, ⌘/Ctrl-click, Shift-click), keyboard navigation (↑↓ / j k, Space, Enter, Esc, ⌘/Ctrl-A, `/` or ⌘/Ctrl-K to search).
 - Status views, categories and tags with live counts.
@@ -18,20 +53,6 @@ Static assets only — no backend, database or extra container. qBittorrent serv
 - **Add torrents** from magnet links, URLs or .torrent files — via the dialog (N), drag & drop anywhere, or pasting a magnet link.
 - Toast notifications for every action, with qBittorrent's error reason on failure.
 - Tested end to end against real qBittorrent 5.0, 5.1, 5.2 and 5.3.
-
-## Install (qBittorrent Alternative WebUI)
-
-1. Build (`pnpm install && pnpm build`) or download a release zip, so you have a folder `torvia/` containing `public/` and `private/`.
-2. qBittorrent → **Tools → Options → Web UI → Use alternative WebUI**.
-3. Set **Root Folder** to the path of `torvia/` **as seen by qBittorrent** (inside the container if you use Docker).
-4. Save, then reload the WebUI page.
-
-### Docker / Portainer
-Mount the folder into the container, e.g. `./torvia:/config/torvia:ro`, and set Root Folder to `/config/torvia`.
-Upgrade by replacing the folder contents atomically (extract next to it, then swap) — `qbittorrent-nox` switches the
-alternative UI **off** if `index.html` is momentarily missing.
-
-If anything goes wrong, untick "Use alternative WebUI" (or remove `WebUI\AlternativeUIEnabled` from `qBittorrent.conf`) to get the stock UI back.
 
 ## Third-party code
 - Charts: [Bklit UI](https://github.com/bklit/bklit-ui) (MIT), vendored in `src/vendor/bklit` by `scripts/vendor-bklit.mjs`.
@@ -47,7 +68,8 @@ TORVIA_QBT_URL=http://localhost:8080 pnpm dev         # app at http://localhost:
 pnpm check                                            # typecheck + tests + build + package guards
 pnpm build && pnpm e2e:qbt [tag]                      # start real qbittorrent-nox in Docker with dist/torvia as alt WebUI
 pnpm e2e                                              # Playwright end-to-end tests against it
-pnpm build && pnpm package                            # dist/torvia-<version>.zip
+pnpm build && pnpm package                            # dist/torvia.zip (+ versioned copy)
+bash e2e/smoke-release.sh dist/torvia.zip             # install the archive into a fresh qBittorrent and verify it
 ```
 
 ## Also included
@@ -59,3 +81,6 @@ produces two independent bundles: a tiny sign-in page and the app. See `CLAUDE.m
 
 ## License
 MIT — see `LICENSE`. Bundled third-party code (Bklit UI charts, Material Icon Theme, fonts) keeps its own MIT/OFL licences; see "Third-party code" above.
+
+## Releasing (maintainers)
+Bump `version` in `package.json`, commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`. The Release workflow checks the tag matches, runs all checks, smoke-tests the archive in a fresh qBittorrent, and publishes `torvia.zip`, `torvia-X.Y.Z.zip` and `SHA256SUMS.txt`. Versions containing a hyphen (`0.2.0-rc.1`) are marked pre-release; plain versions become *Latest*, which makes `…/releases/latest/download/torvia.zip` work.
