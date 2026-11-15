@@ -10,6 +10,7 @@ export type DialogRequest =
   | { kind: 'tags'; hashes: readonly string[] }
   | { kind: 'limits'; hashes: readonly string[] }
   | { kind: 'confirm'; title: string; body: string; confirmLabel: string; destructive?: boolean; onConfirm: () => Promise<void> }
+  | { kind: 'global-speed' }
   | { kind: 'palette' }
   | { kind: 'shortcuts' }
 

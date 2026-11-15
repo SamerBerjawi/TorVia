@@ -13,7 +13,7 @@ import { closeDialog } from './dialogStore'
 import { CancelButton, Modal } from './Modal'
 
 /** Shared busy-state + close-on-success wrapper for dialog submissions. */
-function useSubmit() {
+export function useSubmit() {
   const [busy, setBusy] = useState(false)
   const submit = async (fn: () => Promise<boolean>) => {
     if (busy) return

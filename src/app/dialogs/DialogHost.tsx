@@ -2,6 +2,7 @@ import type { ActionContext } from '../actions/catalogue'
 import { AddDialog } from './AddDialog'
 import { CommandPalette } from './CommandPalette'
 import { useDialogs } from './dialogStore'
+import { GlobalSpeedDialog } from './GlobalSpeedDialog'
 import { ShortcutsDialog } from './ShortcutsDialog'
 import { CategoryDialog, ConfirmDialog, DeleteDialog, LimitsDialog, LocationDialog, RenameDialog, TagsDialog } from './TorrentDialogs'
 
@@ -18,6 +19,7 @@ export function DialogHost({ ctx }: { ctx: ActionContext }) {
     case 'tags': return <TagsDialog hashes={d.hashes} />
     case 'limits': return <LimitsDialog hashes={d.hashes} />
     case 'confirm': return <ConfirmDialog {...d} />
+    case 'global-speed': return <GlobalSpeedDialog />
     case 'palette': return <CommandPalette ctx={ctx} />
     case 'shortcuts': return <ShortcutsDialog />
   }

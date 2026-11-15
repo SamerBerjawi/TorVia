@@ -103,6 +103,7 @@ export const ACTIONS: readonly Action[] = [
   { id: 'add', group: 'global', icon: I.AddIcon, shortcut: 'n', needsSelection: false, label: () => 'Add torrents…', run: () => openDialog({ kind: 'add' }) },
   { id: 'alt-speed', group: 'global', icon: I.SpeedIcon, needsSelection: false, label: (c) => (c.server.use_alt_speed_limits ? 'Turn off alternative speed limits' : 'Turn on alternative speed limits'),
     run: (c) => run(() => transferApi.toggleSpeedLimitsMode(), { success: c.server.use_alt_speed_limits ? 'Alternative speed limits off' : 'Alternative speed limits on', failure: 'Could not toggle speed limits' }) },
+  { id: 'global-speed', group: 'global', icon: I.SpeedIcon, needsSelection: false, label: () => 'Global speed limits…', run: () => openDialog({ kind: 'global-speed' }) },
   { id: 'session', group: 'global', icon: I.StoppedIcon, needsSelection: false, visible: (c) => c.caps.sessionPause,
     label: (c) => (c.server.session_state === false ? 'Resume session' : 'Pause session (all transfers)'),
     run: (c) => c.server.session_state === false

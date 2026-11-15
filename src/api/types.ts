@@ -57,6 +57,9 @@ export interface ServerState {
   free_space_on_disk: number
   connection_status: string
   use_alt_speed_limits: boolean
+  /** Effective global limits in bytes/s (0 = unlimited). */
+  dl_rate_limit: number
+  up_rate_limit: number
   dht_nodes: number
   alltime_dl: number
   alltime_ul: number

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { formatBytes, formatSpeed } from '@/domain/format'
 import { transferApi } from '@/api/torrents'
+import { openDialog } from '../dialogs/dialogStore'
 import { run } from '../actions/run'
 import { ConnectedIcon, DisconnectedIcon, DiskIcon, DownloadIcon, SpeedIcon, UploadIcon } from '../icons'
 import { useEngine } from '../store'
@@ -24,6 +25,7 @@ export function StatusBar({ children }: { children?: ReactNode }) {
       <span className="statusbar__item"><Icon icon={DiskIcon} size={14} />Free {s.free_space_on_disk === undefined ? '—' : formatBytes(s.free_space_on_disk)}</span>
       {s.dht_nodes !== undefined && <span className="statusbar__item statusbar__wide">DHT {s.dht_nodes} nodes</span>}
       <span className="statusbar__spacer" />
+      <SpeedLimitsButton />
       <AltSpeedToggle />
       {children}
     </footer>
@@ -48,6 +50,17 @@ export function AltSpeedToggle() {
     <button type="button" className="altspeed" aria-pressed={on} title="Alternative speed limits"
       onClick={() => void run(() => transferApi.toggleSpeedLimitsMode(), { success: on ? 'Alternative speed limits off' : 'Alternative speed limits on', failure: 'Could not toggle speed limits' })}>
       <Icon icon={SpeedIcon} size={14} />Alt speed {on ? 'on' : 'off'}
+    </button>
+  )
+}
+
+/** Opens the global speed limits dialog; shows the limits currently in force (from sync). */
+function SpeedLimitsButton() {
+  const s = useEngine().data.serverState
+  const limit = (b: number | undefined) => (b && b > 0 ? formatSpeed(b) : '∞')
+  return (
+    <button type="button" className="speedlimits" title="Global speed limits" aria-label={`Global speed limits: download ${limit(s.dl_rate_limit)}, upload ${limit(s.up_rate_limit)}`} onClick={() => openDialog({ kind: 'global-speed' })}>
+      <Icon icon={SpeedIcon} size={14} />Limits ↓ {limit(s.dl_rate_limit)} ↑ {limit(s.up_rate_limit)}
     </button>
   )
 }
