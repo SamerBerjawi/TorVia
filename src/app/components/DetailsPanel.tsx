@@ -8,6 +8,7 @@ import { FileIcon } from './FileIcon'
 import { Icon } from './Icon'
 import { Progress } from './Progress'
 import { statusStyle } from './Status'
+import { FilesTab, PeersTab, TrackersTab } from './DetailTabs'
 
 async function copyText(text: string): Promise<boolean> {
   try {
@@ -41,7 +42,7 @@ const date = (s: number) => (s > 0 ? new Date(s * 1000).toLocaleString() : '—'
 /** Overview of one torrent from sync data. Files/Trackers/Peers tabs come with their endpoints. */
 export function DetailsPanel({ hash, torrent, orientation }: { hash: string; torrent: Torrent; orientation: 'side' | 'bottom' }) {
   const close = useUi((s) => s.closeDetails)
-  const [tab, setTab] = useState<'overview' | 'statistics'>('overview')
+  const [tab, setTab] = useState<'overview' | 'files' | 'trackers' | 'peers' | 'statistics'>('overview')
   const s = toStatus(torrent.state)
   return (
     <aside className={`details details--${orientation}`} aria-label="Torrent details" style={statusStyle(torrent.state)}>
@@ -55,13 +56,17 @@ export function DetailsPanel({ hash, torrent, orientation }: { hash: string; tor
         <Progress value={torrent.progress} variant="bar" />
       </header>
       <div className="tabs" role="tablist" aria-label="Detail sections">
-        {(['overview', 'statistics'] as const).map((t) => (
+        {(['overview', 'files', 'trackers', 'peers', 'statistics'] as const).map((t) => (
           <button key={t} type="button" role="tab" id={`dtab-${t}`} aria-selected={tab === t} aria-controls={`dpanel-${t}`} onClick={() => setTab(t)}>
-            {t === 'overview' ? 'Overview' : 'Statistics'}
+            {t[0]?.toUpperCase()}{t.slice(1)}
           </button>
         ))}
       </div>
-      {tab === 'statistics' ? (
+      {tab === 'files' || tab === 'trackers' || tab === 'peers' ? (
+        <div role="tabpanel" id={`dpanel-${tab}`} aria-labelledby={`dtab-${tab}`} className="details__body details__body--table">
+          {tab === 'files' ? <FilesTab hash={hash} /> : tab === 'trackers' ? <TrackersTab hash={hash} /> : <PeersTab hash={hash} />}
+        </div>
+      ) : tab === 'statistics' ? (
         <div role="tabpanel" id="dpanel-statistics" aria-labelledby="dtab-statistics" className="details__body">
           <Suspense fallback={<p className="panel__empty">Loading charts…</p>}>
             <TorrentStats hash={hash} torrent={torrent} />

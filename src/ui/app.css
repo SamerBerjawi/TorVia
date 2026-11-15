@@ -482,3 +482,16 @@
   .modal { top: auto; bottom: 0; transform: translate(-50%, 0); border-radius: var(--r-lg) var(--r-lg) 0 0; width: 100vw; max-height: 92dvh; }
   .modal[data-starting-style], .modal[data-ending-style] { transform: translate(-50%, 16px); }
 }
+
+/* details tables (files, trackers, peers) */
+.details__body--table { overflow: auto; }
+.dtable { width: 100%; border-collapse: collapse; font-size: 12px; }
+.dtable th { position: sticky; top: 0; z-index: 1; text-align: left; padding: 8px 12px; font-weight: 500; color: var(--text-4); background: var(--surface); border-bottom: 1px solid var(--border); white-space: nowrap; }
+.dtable td { padding: 7px 12px; border-bottom: 1px solid var(--border); color: var(--text-2); vertical-align: middle; }
+.dtable .num { font-family: var(--font-num); white-space: nowrap; }
+.dtable__name { max-width: 280px; }
+.dtable__name > span { display: inline; overflow-wrap: anywhere; }
+.dtable__name :is(svg, img) { vertical-align: -3px; margin-right: 6px; }
+.dtable tr[data-skipped] td { opacity: .55; }
+.select--sm { height: 26px; font-size: 12px; }
+.select--sm { padding: 0 6px; border: 1px solid var(--border-strong, var(--border)); border-radius: var(--r-md); background: var(--surface); color: var(--text); }

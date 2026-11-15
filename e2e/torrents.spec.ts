@@ -83,3 +83,33 @@ for (const skin of ['graphite', 'paper', 'signal'] as const) {
     expect(errors).toEqual([])
   })
 }
+
+test('details tabs load trackers, peers and files without errors', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  const name = `nuvora-e2e-tabs-${Date.now()}.iso`
+  await page.keyboard.press('n')
+  const add = page.getByRole('dialog', { name: 'Add torrents' })
+  await add.getByLabel(/magnet links or urls/i).fill(fakeMagnet(name))
+  await add.getByLabel('Start torrent').uncheck()
+  await add.getByRole('button', { name: /add stopped/i }).click()
+  const row = page.getByRole('row').filter({ hasText: name })
+  await expect(row).toBeVisible({ timeout: 15_000 })
+  await row.click()
+  await page.getByRole('button', { name: 'Show details' }).click()
+  const details = page.getByRole('complementary', { name: 'Torrent details' })
+  for (const tab of ['Trackers', 'Peers', 'Files']) {
+    await details.getByRole('tab', { name: tab }).click()
+    const panel = details.getByRole('tabpanel')
+    // A magnet without metadata has no file list: a table or a visible explanation are both valid.
+    await expect(panel.locator('table, p')).not.toHaveCount(0, { timeout: 10_000 })
+    await expect(panel).not.toContainText('Loading…', { timeout: 10_000 })
+  }
+  // cleanup
+  await row.click()
+  await page.keyboard.press('Delete')
+  await page.getByRole('alertdialog').getByRole('button', { name: /^remove/i }).click()
+  await expect(row).toHaveCount(0, { timeout: 10_000 })
+  expect(errors).toEqual([])
+})
