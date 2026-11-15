@@ -6,6 +6,8 @@ import type { SortKey } from '@/domain/sort'
 import { ChevronDownIcon, ChevronUpIcon, EmptyIcon } from '../icons'
 import { useUi } from '../uiStore'
 import type { TableItem } from '../useTorrentView'
+import { TorrentContextMenu } from '../actions/ActionMenus'
+import type { ActionContext } from '../actions/catalogue'
 import { Icon } from './Icon'
 import { statusStyle } from './Status'
 
@@ -29,6 +31,8 @@ interface Props {
   label: string
   emptyText: string
   narrow: boolean
+  /** Actions for the right-click menu. */
+  ctx: ActionContext
 }
 
 const GROUP_HEIGHT = 44
@@ -37,6 +41,7 @@ const HEADER_HEIGHT = 32
 const Row = memo(function Row(props: {
   hash: string; torrent: Torrent; columns: readonly Column[]; template: string; selected: boolean; focused: boolean
   index: number; top: number; height: number; onClick: (e: MouseEvent, hash: string) => void; onOpen: (hash: string) => void
+  onContext: (hash: string) => void
 }) {
   const { hash, torrent, columns, template, selected, focused, index, top, height } = props
   return (
@@ -50,6 +55,7 @@ const Row = memo(function Row(props: {
       style={{ ...statusStyle(torrent.state), gridTemplateColumns: template, height, transform: `translateY(${top}px)` }}
       onClick={(e) => props.onClick(e, hash)}
       onDoubleClick={() => props.onOpen(hash)}
+      onContextMenu={() => props.onContext(hash)}
     >
       {columns.map((c) => (
         <div key={c.id} role="gridcell" className={`tcell tcell--${c.id}${c.align === 'end' ? ' tcell--end' : ''}`}>
@@ -72,7 +78,7 @@ function GroupHeader({ item, top }: { item: Extract<TableItem, { type: 'group' }
   )
 }
 
-export function TorrentTable({ columns: allColumns, items, order, rowHeight, label, emptyText, narrow }: Props) {
+export function TorrentTable({ columns: allColumns, items, order, rowHeight, label, emptyText, narrow, ctx }: Props) {
   // Phones: drop secondary columns and relax the name column's minimum so nothing scrolls sideways.
   const columns = useMemo(
     () => (narrow ? allColumns.filter((c) => !c.wide).map((c) => ({ ...c, width: c.width.replace('minmax(220px', 'minmax(120px').replace(/^1[5-7]0px$/, '110px') })) : allColumns),
@@ -109,6 +115,12 @@ export function TorrentTable({ columns: allColumns, items, order, rowHeight, lab
     [select, order],
   )
 
+  // Right-clicking an unselected row acts on that row alone (desktop convention).
+  const onContext = useCallback(
+    (hash: string) => { if (!useUi.getState().selected.has(hash)) select(hash, 'single', order) },
+    [select, order],
+  )
+
   function move(delta: number) {
     if (order.length === 0) return
     const i = focused ? order.indexOf(focused) : -1
@@ -137,6 +149,7 @@ export function TorrentTable({ columns: allColumns, items, order, rowHeight, lab
 
   return (
     <div className="ttable" role="grid" aria-label={label} aria-rowcount={order.length + 1} aria-multiselectable="true">
+      <TorrentContextMenu ctx={ctx}>
       <div
         ref={scroller}
         className="tscroll"
@@ -174,13 +187,14 @@ export function TorrentTable({ columns: allColumns, items, order, rowHeight, lab
                 <Row
                   key={it.hash} hash={it.hash} torrent={it.torrent} columns={columns} template={template}
                   selected={selected.has(it.hash)} focused={focused === it.hash} index={v.index}
-                  top={v.start} height={rowHeight} onClick={onClick} onOpen={openDetails}
+                  top={v.start} height={rowHeight} onClick={onClick} onOpen={openDetails} onContext={onContext}
                 />
               )
             })}
           </div>
         )}
       </div>
+      </TorrentContextMenu>
     </div>
   )
 }

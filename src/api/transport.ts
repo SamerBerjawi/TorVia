@@ -24,7 +24,7 @@ function classify(status: number): ApiErrorKind {
 
 export async function request(
   path: string,
-  init: { method?: 'GET' | 'POST'; body?: URLSearchParams; signal?: AbortSignal } = {},
+  init: { method?: 'GET' | 'POST'; body?: URLSearchParams | FormData; signal?: AbortSignal } = {},
 ): Promise<Response> {
   let res: Response
   try {
@@ -54,4 +54,18 @@ export async function getText(path: string): Promise<string> {
 
 export async function post(path: string, form: Record<string, string>): Promise<Response> {
   return request(path, { method: 'POST', body: new URLSearchParams(form) })
+}
+
+/** qBittorrent puts a human-readable reason in the body of 4xx responses; surface it. */
+export async function postOrThrow(path: string, form: Record<string, string>): Promise<void> {
+  let res: Response
+  try {
+    res = await fetch(BASE + path, { method: 'POST', body: new URLSearchParams(form), credentials: 'same-origin', cache: 'no-store' })
+  } catch {
+    throw new ApiError('network', 0, 'Cannot reach qBittorrent')
+  }
+  if (!res.ok) {
+    const text = (await res.text().catch(() => '')).trim()
+    throw new ApiError(classify(res.status), res.status, text || `${res.status} ${res.statusText}`)
+  }
 }

@@ -1,5 +1,4 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { getText } from '@/api/transport'
 import { getAppearance, subscribeAppearance, type Appearance } from '@/ui/theme'
 
 export function useMediaQuery(query: string): boolean {
@@ -16,13 +15,4 @@ export function useMediaQuery(query: string): boolean {
 
 export function useAppearance(): Appearance {
   return useSyncExternalStore(subscribeAppearance, getAppearance)
-}
-
-/** qBittorrent version for display; null until known (never blocks rendering). */
-export function useServerVersion(): string | null {
-  const [v, setV] = useState<string | null>(null)
-  useEffect(() => {
-    getText('app/version').then((s) => setV(s.trim().replace(/^v/, '')), () => setV(null))
-  }, [])
-  return v
 }

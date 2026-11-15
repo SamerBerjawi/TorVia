@@ -1,5 +1,7 @@
 import { STATUS_FILTER_LABEL, type StatusFilter } from '@/domain/filters'
 import { PAPER_COLUMNS } from '../columns'
+import { SelectionBar } from '../actions/SelectionBar'
+import { AddButton } from '../components/AddButton'
 import { AppearanceMenu } from '../components/AppearanceMenu'
 import { BrandMark, SignOutButton } from '../components/Chrome'
 import { DetailsPanel } from '../components/DetailsPanel'
@@ -16,7 +18,7 @@ import type { LayoutProps } from './types'
 const SEGMENTS: StatusFilter[] = ['all', 'downloading', 'seeding', 'completed', 'stopped', 'errored']
 
 /** B · Paper — native-desktop toolbar with status segments, slim source list, details pane below. */
-export function PaperLayout({ view, narrow, version, route, statistics }: LayoutProps) {
+export function PaperLayout({ view, narrow, version, route, statistics, ctx }: LayoutProps) {
   const { data } = useEngine()
   const { status, setStatus, focused, detailsOpen } = useUi()
   const detail = detailsOpen && focused ? data.torrents.get(focused) : undefined
@@ -25,31 +27,37 @@ export function PaperLayout({ view, narrow, version, route, statistics }: Layout
       <header className="topbar">
         <div className="topbar__brand"><BrandMark /><span className="brandname">Nuvora</span></div>
         <RouteNav route={route} variant="tabs" />
-        {!statistics && <div className="segmented segmented--toolbar" role="group" aria-label="Status filter">
-          {SEGMENTS.map((s) => (
-            <button key={s} type="button" aria-pressed={status === s} data-tone={s === 'errored' ? 'err' : undefined} onClick={() => setStatus(s)}>
-              <Icon icon={STATUS_ICON[s]} size={14} />
-              {STATUS_FILTER_LABEL[s]} <span className="segmented__count">{view.counts[s]}</span>
-            </button>
-          ))}
-        </div>}
         <span className="topbar__spacer" />
+        {!statistics && <SelectionBar ctx={ctx} variant="toolbar" />}
         {!statistics && <SearchBox placeholder="Search" />}
+        <AddButton variant="compact" />
         <AppearanceMenu compact />
         <SignOutButton />
       </header>
+      {!statistics && (
+        <div className="scopebar">
+        <div className="segmented segmented--toolbar" role="group" aria-label="Status filter">
+            {SEGMENTS.map((s) => (
+              <button key={s} type="button" aria-pressed={status === s} data-tone={s === 'errored' ? 'err' : undefined} onClick={() => setStatus(s)}>
+                <Icon icon={STATUS_ICON[s]} size={14} />
+                {STATUS_FILTER_LABEL[s]} <span className="segmented__count">{view.counts[s]}</span>
+              </button>
+            ))}
+          </div>
+          <span className="scopebar__count">{view.rows.length === view.total ? `${view.total} torrents` : `${view.rows.length} of ${view.total} shown`}</span>
+        </div>
+      )}
       <div className="shell__body">
         {statistics ? <main className="main main--stats">{statistics}</main> : <>
         <Sidebar view={view} showStatus={false} />
         <main className="main">
           <ConnectionBanner />
-          <TorrentTable columns={PAPER_COLUMNS} items={view.flatItems} order={view.order} rowHeight={narrow ? 52 : 40} label="Torrents" emptyText={view.total ? 'No torrents match these filters.' : 'No torrents yet.'} narrow={narrow} />
+          <TorrentTable columns={PAPER_COLUMNS} items={view.flatItems} order={view.order} rowHeight={narrow ? 52 : 40} label="Torrents" emptyText={view.total ? 'No torrents match these filters.' : 'No torrents yet.'} narrow={narrow} ctx={ctx} />
           {detail && focused && <DetailsPanel hash={focused} torrent={detail} orientation="bottom" />}
         </main>
         </>}
       </div>
       <StatusBar>
-        <span className="statusbar__item">{view.rows.length} of {view.total} shown</span>
         {version && <span className="statusbar__item statusbar__wide">qBittorrent {version}</span>}
       </StatusBar>
     </div>

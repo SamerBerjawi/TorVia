@@ -14,6 +14,10 @@ Static assets only — no backend, database or extra container. qBittorrent serv
 - **Statistics** page (`#/statistics`): live download/upload charts, all-time and session totals, global ratio, peers, torrents by status, library by category, share-ratio distribution, top uploaders.
 - Per-torrent **Statistics** tab: progress / ratio / availability rings, live speed, swarm (connected vs. available), time active and totals.
 - Connection-loss banner with automatic recovery.
+- **Torrent actions** from the right-click menu, the selection bar, single-key shortcuts and the **⌘K command palette**: start, stop, force start, recheck, reannounce, remove (optionally with files), set category/tags/location, rename, queue order, speed limits, sequential download, first/last piece priority, super seeding, automatic management, copy name/hash/magnet.
+- **Add torrents** from magnet links, URLs or .torrent files — via the dialog (N), drag & drop anywhere, or pasting a magnet link.
+- Toast notifications for every action, with qBittorrent's error reason on failure.
+- Tested end to end against real qBittorrent 5.0, 5.1, 5.2 and 5.3.
 
 ## Install (qBittorrent Alternative WebUI)
 
@@ -41,6 +45,8 @@ pnpm install
 NUVORA_QBT_URL=http://localhost:8080 pnpm dev:login   # sign in at http://localhost:5174
 NUVORA_QBT_URL=http://localhost:8080 pnpm dev         # app at http://localhost:5173
 pnpm check                                            # typecheck + tests + build + package guards
+pnpm build && pnpm e2e:qbt [tag]                      # start real qbittorrent-nox in Docker with dist/nuvora as alt WebUI
+pnpm e2e                                              # Playwright end-to-end tests against it
 pnpm build && pnpm package                            # dist/nuvora-<version>.zip
 ```
 

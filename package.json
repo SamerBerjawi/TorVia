@@ -14,7 +14,9 @@
     "build:app": "vite build --mode app",
     "build": "pnpm build:login && pnpm build:app && node scripts/guard-package.mjs",
     "check": "pnpm typecheck && pnpm test && pnpm build",
-    "package": "node scripts/make-zip.mjs"
+    "package": "node scripts/make-zip.mjs",
+    "e2e": "playwright test",
+    "e2e:qbt": "bash e2e/run-qbt.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -38,6 +40,7 @@
   },
   "devDependencies": {
     "@iconify-json/material-icon-theme": "^1.2.77",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "^4.3.5",
     "@types/d3-array": "^3.2.2",
     "@types/d3-scale": "^4.0.9",

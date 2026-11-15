@@ -1,5 +1,7 @@
 import { DetailsIcon } from '../icons'
 import { GRAPHITE_COLUMNS } from '../columns'
+import { SelectionBar } from '../actions/SelectionBar'
+import { AddButton } from '../components/AddButton'
 import { AppearanceMenu } from '../components/AppearanceMenu'
 import { BrandMark, SignOutButton } from '../components/Chrome'
 import { DetailsPanel } from '../components/DetailsPanel'
@@ -14,9 +16,9 @@ import { useUi } from '../uiStore'
 import type { LayoutProps } from './types'
 
 /** A · Graphite — sidebar, table, details on the right. Calm and dense. */
-export function GraphiteLayout({ view, narrow, version, route, statistics }: LayoutProps) {
+export function GraphiteLayout({ view, narrow, version, route, statistics, ctx }: LayoutProps) {
   const { data } = useEngine()
-  const { focused, detailsOpen, openDetails, closeDetails, selected, clearSelection } = useUi()
+  const { focused, detailsOpen, openDetails, closeDetails } = useUi()
   const detail = detailsOpen && focused ? data.torrents.get(focused) : undefined
   return (
     <div className="shell">
@@ -31,14 +33,9 @@ export function GraphiteLayout({ view, narrow, version, route, statistics }: Lay
               <Icon icon={DetailsIcon} />
             </button>
           </div>
-          {selected.size > 1 && (
-            <div className="selbar" role="status">
-              <strong>{selected.size} selected</strong>
-              <button type="button" className="linkbtn" onClick={clearSelection}>Clear</button>
-            </div>
-          )}
+          <SelectionBar ctx={ctx} variant="bar" />
           <ConnectionBanner />
-          <TorrentTable columns={GRAPHITE_COLUMNS} items={view.flatItems} order={view.order} rowHeight={narrow ? 52 : 44} label="Torrents" emptyText={view.total ? 'No torrents match these filters.' : 'No torrents yet.'} narrow={narrow} />
+          <TorrentTable columns={GRAPHITE_COLUMNS} items={view.flatItems} order={view.order} rowHeight={narrow ? 52 : 44} label="Torrents" emptyText={view.total ? 'No torrents match these filters.' : 'No torrents yet — press N or drop a .torrent file to add one.'} narrow={narrow} ctx={ctx} />
         </main>
         {detail && focused && <DetailsPanel hash={focused} torrent={detail} orientation="side" />}
         </>}
@@ -61,6 +58,7 @@ function Sidebar({ view, version, route }: Pick<LayoutProps, 'view' | 'version' 
             <span className="brandname">Nuvora</span>
             {version && <span className="sidebar__version">qBittorrent {version}</span>}
           </div>
+          <div className="sidebar__add"><AddButton variant="full" /></div>
           <RouteNav route={route} variant="list" />
         </>
       }

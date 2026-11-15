@@ -19,6 +19,17 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 - File-type icons: `domain/fileKind.ts` decides the kind; `scripts/gen-file-icons.mjs` maps kinds to Material Icon Theme and generates `app/fileIcons.generated.ts`; `FileIcon.tsx` renders it. Re-run the script after changing kinds.
 - Fonts are self-hosted via @fontsource (no external requests; CSP forbids them).
 
+## Actions, dialogs, feedback
+- Every user action is defined once in `src/app/actions/catalogue.ts` (label, icon, shortcut, visibility, enablement, run). The context menu, selection bar, command palette and keyboard shortcuts all render from it — add new actions there, never ad hoc.
+- Mutations go through `actions/run.ts` (`run()`): success/error toast + immediate sync refresh. No optimistic UI; sync confirms.
+- Dialogs: request via `openDialog()` (`dialogs/dialogStore.ts`); `DialogHost` renders exactly one. Destructive operations use `alert` modals; "delete files" is opt-in and visibly dangerous.
+- Version-dependent API behaviour: read flags from `api/capabilities.ts` (`useServerInfo().caps`); never compare versions elsewhere.
+- UI primitives: Base UI (`@base-ui/react`). `CSPProvider disableStyleElements` must wrap the app (our CSP forbids inline <style>).
+
+## Testing
+- Unit: `pnpm test` (Vitest) — pure logic in api/, sync/, domain/.
+- E2E: `pnpm build && pnpm e2e:qbt [tag] && pnpm e2e` — Playwright against a **real** qbittorrent-nox container serving `dist/nuvora` as its alternative WebUI. CI runs 5.0, 5.1, 5.2 and latest. Never replace this with a mock; mocks hid a real login bug (5.x returns 204).
+
 ## Charts
 - Bklit UI components are vendored source (shadcn-style), styled with Tailwind v4 utilities. `src/ui/charts.css` loads Tailwind **theme + utilities only (no preflight)** and maps Bklit's `--chart-*` variables onto skin tokens — charts never get their own colours.
 - Chart code is lazy-loaded (`React.lazy`): keep `Charts.tsx` imports out of the main bundle.
@@ -31,7 +42,7 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 - Symlinks forbidden; per-file limit 10 MiB; JS/CSS cached 12 h → keep content-hashed filenames.
 - No CSP is sent for alt UIs → CSP lives in each `index.html`. No inline scripts; keep `style-src 'self'` (React style props are fine).
 - Same-origin relative URLs only (`api/v2/...`, `base: './'`) so reverse-proxy sub-paths work.
-- Bad login: WebAPI < 2.14 → 200 + body `Fails.`; ≥ 2.14 → 401; 403 = IP banned.
+- Login (verified live on 5.3.0): success = 204 empty body (5.x) or 200 `Ok.`; bad credentials = 401 (≥ 2.14) or 200 `Fails.`; 403 = IP banned. See `api/auth.ts` `interpretLogin`.
 - 5.x renamed `paused*` → `stopped*` states; keep both in `domain/status.ts` and `domain/filters.ts`.
 - Clipboard API only works in secure contexts (HTTPS/localhost); always handle failure.
 

@@ -31,6 +31,15 @@ export interface Torrent {
   last_activity: number
   ratio_limit: number
   max_ratio: number
+  force_start: boolean
+  seq_dl: boolean
+  f_l_piece_prio: boolean
+  super_seeding: boolean
+  auto_tmm: boolean
+  magnet_uri: string
+  /** Bytes/s; 0 or -1 = unlimited. */
+  dl_limit: number
+  up_limit: number
   [key: string]: unknown
 }
 
@@ -55,6 +64,10 @@ export interface ServerState {
   global_ratio: string
   total_peer_connections: number
   total_wasted_session: number
+  /** True when torrent queueing is enabled in preferences. */
+  queueing: boolean
+  /** 2.16.2+: false while the whole session is paused. */
+  session_state: boolean
   [key: string]: unknown
 }
 

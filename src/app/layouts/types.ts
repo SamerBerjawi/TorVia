@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { ActionContext } from '../actions/catalogue'
 import type { Route } from '../router'
 import type { useTorrentView } from '../useTorrentView'
 
@@ -9,4 +10,6 @@ export interface LayoutProps {
   route: Route
   /** Rendered Statistics view when route is 'statistics', else null. */
   statistics: ReactNode
+  /** Actions for the current selection. */
+  ctx: ActionContext
 }
