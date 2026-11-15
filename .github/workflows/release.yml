@@ -1,12 +1,21 @@
 name: Release
 
-# Publishing: bump "version" in package.json, commit, then push a matching tag:
-#   git tag v0.2.0 && git push origin v0.2.0
-# The workflow builds, tests, smoke-tests the archive exactly as a user installs it, then publishes.
+# Two ways to publish (bump "version" in package.json and commit first):
+#   1. Push a matching tag:        git tag v0.2.0 && git push origin v0.2.0
+#   2. Run this workflow manually with "publish" ticked (Actions tab, or
+#      gh workflow run release.yml --ref <branch> -f publish=true). It tags v<package.json version>
+#      on the commit it runs from, so no local git access is needed.
+# Either way it builds, tests, smoke-tests the archive exactly as a user installs it, then publishes.
+# A manual run without "publish" is a dry run: nothing is tagged or released.
 on:
   push:
     tags: ['v*']
-  workflow_dispatch: # manual run = dry run: builds and smoke-tests, never publishes
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish a release (creates tag v<package.json version> on this commit). Leave off for a dry run.
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -24,11 +33,22 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Tag must match package.json version
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Work out the release tag
+        id: tag
         run: |
           VERSION="v$(node -p "require('./package.json').version")"
-          [ "$VERSION" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME != package.json $VERSION"; exit 1; }
+          if [ "${{ startsWith(github.ref, 'refs/tags/') }}" = true ]; then
+            [ "$VERSION" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME != package.json $VERSION"; exit 1; }
+          fi
+          echo "name=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Refuse to overwrite an existing release (manual publish)
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.tag.outputs.name }}" >/dev/null 2>&1; then
+            echo "Release ${{ steps.tag.outputs.name }} already exists. Bump version in package.json first."; exit 1
+          fi
       - run: pnpm check
       - run: pnpm package
       - name: Smoke test the archive (unzip into a fresh qBittorrent, point the WebUI at it, run E2E)
@@ -56,17 +76,19 @@ jobs:
           Requires qBittorrent 5.0 or newer. Verify downloads with `SHA256SUMS.txt`.
           NOTES
       - name: Publish GitHub release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          TAG="${{ steps.tag.outputs.name }}"
           # Versions with a hyphen (0.2.0-rc.1) are pre-releases; plain versions become "Latest",
           # which is what makes .../releases/latest/download/torvia.zip resolve.
-          PRE=""; case "$GITHUB_REF_NAME" in *-*) PRE="--prerelease";; esac
-          gh release create "$GITHUB_REF_NAME" dist/torvia.zip dist/torvia-*.zip dist/SHA256SUMS.txt \
-            --title "Torvia $GITHUB_REF_NAME" --notes-file dist/NOTES.md --generate-notes $PRE
+          PRE=""; case "$TAG" in *-*) PRE="--prerelease";; esac
+          # --target tags the exact commit this run built (a no-op when the tag already exists).
+          gh release create "$TAG" dist/torvia.zip dist/torvia-*.zip dist/SHA256SUMS.txt \
+            --target "$GITHUB_SHA" --title "Torvia $TAG" --notes-file dist/NOTES.md --generate-notes $PRE
       - name: Keep the archive from dry runs
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ !startsWith(github.ref, 'refs/tags/') && !inputs.publish }}
         uses: actions/upload-artifact@v4
         with:
           name: torvia-release-dry-run
