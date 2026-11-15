@@ -3,6 +3,30 @@
 A next-generation alternative WebUI for [qBittorrent](https://github.com/qbittorrent/qBittorrent).
 Static assets only — no backend, database or extra container. qBittorrent serves it and handles authentication.
 
+## Screenshots
+
+Real qBittorrent 5.3 with a handful of locally created sample torrents (no traffic, so speeds are empty). Regenerate with `bash scripts/screenshots/run.sh`.
+
+![Graphite (dark): torrent list with the details panel](docs/screenshots/graphite-dark.png)
+*Graphite, dark: sidebar with live counts, selection bar, details panel.*
+
+![Paper (light): torrent list with the Files tab](docs/screenshots/paper-light.png)
+*Paper, light: desktop-style toolbar and status segments; the Files tab shows the folder tree with per-file priority.*
+
+![Signal (dark): query bar and grouped rows](docs/screenshots/signal-dark.png)
+*Signal, dark: query-first console. Typed queries become chips, rows are grouped by category.*
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/statistics-graphite-light.png" alt="Statistics page in Graphite light"><br><em>Statistics: live speed, totals, torrents by status, library by category.</em></td>
+<td width="50%"><img src="docs/screenshots/settings-paper-dark.png" alt="Settings page with the style picker in Paper dark"><br><em>Settings: pick a style and mode, then the searchable qBittorrent preferences.</em></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/palette-signal-light.png" alt="Command palette in Signal light"><br><em>Command palette (Ctrl/⌘ K): every action, plus switching style and mode.</em></td>
+<td></td>
+</tr>
+</table>
+
 ## Install
 
 Torvia is just a folder of files. Download it, put it in your qBittorrent folder, point qBittorrent's WebUI at it. Nothing to build, run or configure beyond that. Requires **qBittorrent 5.0 or newer**.
@@ -68,6 +92,7 @@ TORVIA_QBT_URL=http://localhost:8080 pnpm dev         # app at http://localhost:
 pnpm check                                            # typecheck + tests + build + package guards
 pnpm build && pnpm e2e:qbt [tag]                      # start real qbittorrent-nox in Docker with dist/torvia as alt WebUI
 pnpm e2e                                              # Playwright end-to-end tests against it
+bash scripts/screenshots/run.sh                       # regenerate docs/screenshots against a throwaway qBittorrent
 pnpm build && pnpm package                            # dist/torvia.zip (+ versioned copy)
 bash e2e/smoke-release.sh dist/torvia.zip             # install the archive into a fresh qBittorrent and verify it
 ```
@@ -79,8 +104,11 @@ Search (qBittorrent search plugins), RSS feeds and auto-download rules, torrent 
 qBittorrent serves `public/` to signed-out clients and `private/` to signed-in ones (falling back to `public/`). So the build
 produces two independent bundles: a tiny sign-in page and the app. See `CLAUDE.md` for the constraints this imposes.
 
+## Changelog
+See [CHANGELOG.md](CHANGELOG.md) and the [Releases](https://github.com/SamerBerjawi/torvia/releases) page.
+
 ## License
 MIT — see `LICENSE`. Bundled third-party code (Bklit UI charts, Material Icon Theme, fonts) keeps its own MIT/OFL licences; see "Third-party code" above.
 
 ## Releasing (maintainers)
-Bump `version` in `package.json`, commit, then either `git tag vX.Y.Z && git push origin vX.Y.Z`, or run the **Release** workflow manually with **publish** ticked (Actions tab, or `gh workflow run release.yml --ref <branch> -f publish=true`), which tags `vX.Y.Z` on that commit for you. A manual run without *publish* is a dry run. The Release workflow checks the tag matches, runs all checks, smoke-tests the archive in a fresh qBittorrent, and publishes `torvia.zip`, `torvia-X.Y.Z.zip` and `SHA256SUMS.txt`. Versions containing a hyphen (`0.2.0-rc.1`) are marked pre-release; plain versions become *Latest*, which makes `…/releases/latest/download/torvia.zip` work.
+Bump `version` in `package.json`, add a `## [x.y.z]` section to [`CHANGELOG.md`](CHANGELOG.md) (the release notes are taken from it, and the release fails without it), commit, then either `git tag vX.Y.Z && git push origin vX.Y.Z`, or run the **Release** workflow manually with **publish** ticked (Actions tab, or `gh workflow run release.yml --ref <branch> -f publish=true`), which tags `vX.Y.Z` on that commit for you. A manual run without *publish* is a dry run. The Release workflow checks the tag matches, runs all checks, smoke-tests the archive in a fresh qBittorrent, and publishes `torvia.zip`, `torvia-X.Y.Z.zip` and `SHA256SUMS.txt`. Versions containing a hyphen (`0.2.0-rc.1`) are marked pre-release; plain versions become *Latest*, which makes `…/releases/latest/download/torvia.zip` work.

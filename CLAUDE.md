@@ -71,3 +71,7 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 - Endpoints that may not exist on older qBittorrent (torrent creator) are probed by calling them: a 404 shows an explanation, never a broken page.
 - Notifications: `app/notifications.ts` (opt-in, Settings). PWA: manifest + icons in `public-assets/` (regenerate PNGs with `scripts/gen-icons.mjs`); deliberately **no service worker** (ADR 0012).
 - Decisions live in `docs/adr/`; accessibility gates and the manual checklist in `docs/accessibility.md`. Run the axe audit with `pnpm e2e e2e/a11y.spec.ts` (set `A11Y_REPORT=path.tsv` to collect everything).
+
+## Changelog and screenshots
+- Every release needs a `## [x.y.z]` section in `CHANGELOG.md` (Keep a Changelog). `scripts/release-notes.mjs` turns it into the GitHub release notes and fails without it; a unit test checks the current `package.json` version has an entry. Add user-visible changes under `## [Unreleased]` as you go.
+- README screenshots live in `docs/screenshots/` and come from `bash scripts/screenshots/run.sh` (real qBittorrent in Docker, sample torrents built by `make-sample-data.mjs` with real hashes). Never hand-edit or use mock data; re-run it after visible UI changes.

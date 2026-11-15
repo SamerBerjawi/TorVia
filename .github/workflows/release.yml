@@ -1,6 +1,6 @@
 name: Release
 
-# Two ways to publish (bump "version" in package.json and commit first):
+# Two ways to publish (bump "version" in package.json, add a "## [x.y.z]" section to CHANGELOG.md, commit):
 #   1. Push a matching tag:        git tag v0.2.0 && git push origin v0.2.0
 #   2. Run this workflow manually with "publish" ticked (Actions tab, or
 #      gh workflow run release.yml --ref <branch> -f publish=true). It tags v<package.json version>
@@ -64,17 +64,8 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: dist/torvia.zip
-      - name: Release notes
-        run: |
-          cat > dist/NOTES.md <<'NOTES'
-          ## Install
-          1. Download **torvia.zip** below and extract it. You get one folder, `torvia`, containing `public` and `private`.
-          2. Put that folder inside your qBittorrent folder (Docker/NAS: into the folder you mount as `/config`).
-          3. In qBittorrent: **Tools → Options → Web UI → Use alternative WebUI**, set **Files location** to the `torvia` folder (inside a container: `/config/torvia`), Apply, then reload the page.
-
-          Full steps, Docker/Portainer and updating: see `INSTALL.txt` inside the archive, or the README.
-          Requires qBittorrent 5.0 or newer. Verify downloads with `SHA256SUMS.txt`.
-          NOTES
+      - name: Release notes (from CHANGELOG.md; fails if this version has no entry)
+        run: node scripts/release-notes.mjs "$(node -p "require('./package.json').version")" > dist/NOTES.md
       - name: Publish GitHub release
         if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish)
         env:
@@ -86,7 +77,7 @@ jobs:
           PRE=""; case "$TAG" in *-*) PRE="--prerelease";; esac
           # --target tags the exact commit this run built (a no-op when the tag already exists).
           gh release create "$TAG" dist/torvia.zip dist/torvia-*.zip dist/SHA256SUMS.txt \
-            --target "$GITHUB_SHA" --title "Torvia $TAG" --notes-file dist/NOTES.md --generate-notes $PRE
+            --target "$GITHUB_SHA" --title "Torvia $TAG" --notes-file dist/NOTES.md $PRE
       - name: Keep the archive from dry runs
         if: ${{ !startsWith(github.ref, 'refs/tags/') && !inputs.publish }}
         uses: actions/upload-artifact@v4
