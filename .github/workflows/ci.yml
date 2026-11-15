@@ -55,5 +55,9 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: bash e2e/run-qbt.sh ${{ matrix.qbt }}
       - run: pnpm e2e
+      # The axe audit is slow, so it runs once, against the newest qBittorrent.
+      - if: matrix.qbt == 'latest'
+        run: pnpm e2e:a11y
+        timeout-minutes: 40
       - if: failure()
         run: docker logs torvia-qbt || true

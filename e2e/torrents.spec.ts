@@ -285,7 +285,7 @@ test('table density and saved layouts persist and apply', async ({ page }) => {
   const panel = () => page.getByRole('dialog', { name: 'Table options' })
   await grid.getByRole('button', { name: 'Table options' }).click()
   await panel().getByLabel('Compact').check()
-  await expect(grid).toHaveAttribute('data-density', 'compact')
+  await expect(page.locator('.ttable')).toHaveAttribute('data-density', 'compact')
   // Build a layout: compact + Added column + sorted by size.
   await panel().getByRole('checkbox', { name: 'Added' }).check()
   await page.keyboard.press('Escape')
@@ -296,15 +296,15 @@ test('table density and saved layouts persist and apply', async ({ page }) => {
   await expect(page.getByText('Saved layout “E2E compact”')).toBeVisible()
   // Change everything back, then apply the layout.
   await panel().getByRole('button', { name: 'Reset to default' }).click()
-  await expect(grid).toHaveAttribute('data-density', 'comfortable')
+  await expect(page.locator('.ttable')).toHaveAttribute('data-density', 'comfortable')
   await expect(grid.getByRole('columnheader', { name: 'Added' })).toHaveCount(0)
   await panel().getByRole('button', { name: 'Apply layout E2E compact' }).click()
-  await expect(grid).toHaveAttribute('data-density', 'compact')
+  await expect(page.locator('.ttable')).toHaveAttribute('data-density', 'compact')
   await expect(grid.getByRole('columnheader', { name: 'Added' })).toBeVisible()
   await expect(grid.getByRole('columnheader', { name: 'Size' })).toHaveAttribute('aria-sort', /ascending|descending/)
   // Survives a reload; then delete it and restore defaults.
   await page.reload()
-  await expect(grid).toHaveAttribute('data-density', 'compact')
+  await expect(page.locator('.ttable')).toHaveAttribute('data-density', 'compact')
   await grid.getByRole('button', { name: 'Table options' }).click()
   await expect(panel().getByRole('button', { name: 'Apply layout E2E compact' })).toBeVisible()
   await panel().getByRole('button', { name: 'Delete layout E2E compact' }).click()

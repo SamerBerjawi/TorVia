@@ -6,6 +6,8 @@ import { defineConfig } from '@playwright/test'
  */
 export default defineConfig({
   testDir: 'e2e',
+  // The axe audit walks every screen in six themes (~15 min), so it is opt-in: `pnpm e2e:a11y`.
+  testMatch: process.env['A11Y'] ? /a11y\.spec\.ts/ : /^(?!.*a11y).*\.spec\.ts$/,
   timeout: 60_000,
   fullyParallel: false,
   workers: 1,

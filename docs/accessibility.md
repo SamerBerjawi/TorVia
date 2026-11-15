@@ -4,7 +4,7 @@ Target: WCAG 2.2 level AA.
 
 ## Automated (runs in CI)
 - `src/ui/contrast.test.ts` — every text token against every surface it can sit on, in all six skin × mode themes.
-- `e2e/a11y.spec.ts` — axe-core over: torrent list, add dialog, each details tab, table options, command palette, context menu, global speed limits, statistics, settings; in all six themes, against real qBittorrent. Set `A11Y_REPORT=/path/report.tsv` to collect every finding instead of reading failures one at a time.
+- `e2e/a11y.spec.ts` (`pnpm e2e:a11y`, ~15 min, runs in CI on the newest qBittorrent only) — axe-core over: torrent list, add dialog, each details tab, table options, command palette, context menu, global speed limits, statistics, settings; in all six themes, against real qBittorrent. Set `A11Y_REPORT=/path/report.tsv` to collect every finding instead of reading failures one at a time.
 
 ## Manual checklist (before each release)
 Automated rules cover roughly a third of WCAG. Check by hand:

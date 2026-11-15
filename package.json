@@ -17,6 +17,7 @@
     "check": "pnpm typecheck && pnpm test && pnpm build",
     "package": "node scripts/make-zip.mjs",
     "e2e": "playwright test",
+    "e2e:a11y": "A11Y=1 playwright test",
     "e2e:qbt": "bash e2e/run-qbt.sh"
   },
   "dependencies": {

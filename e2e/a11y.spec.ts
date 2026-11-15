@@ -18,7 +18,7 @@ const SKINS = ['graphite', 'paper', 'signal'] as const
 const MODES = ['light', 'dark'] as const
 
 test.describe.configure({ mode: 'default' })
-test.setTimeout(240_000)
+test.setTimeout(600_000)
 /** Escape, then let close animations finish so axe never samples a half-faded overlay. */
 const dismiss = async (page: Page) => { await page.keyboard.press('Escape'); await page.waitForTimeout(450) }
 for (const skin of SKINS) {
