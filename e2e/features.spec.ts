@@ -63,7 +63,7 @@ test('search: explains missing plugins instead of failing', async ({ page }) => 
   await signIn(page)
   await page.getByRole('link', { name: 'Search' }).click()
   // The test container has no Python/plugins: either the explanation or a usable form is correct, never a blank page.
-  await expect(page.getByText(/No search plugins are enabled|Search for torrents|Could not load/).first()).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText(/No search plugin is enabled yet|Search for torrents|Could not load/).first()).toBeVisible({ timeout: 10_000 })
   expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
 })
 
@@ -391,22 +391,92 @@ const removeRow = async (page: import('@playwright/test').Page, row: import('@pl
   await page.getByRole('alertdialog').getByRole('button', { name: /^remove/i }).click()
 }
 
-test('find similar: without search plugins the buttons are hidden and the Search page explains why', async ({ page }) => {
+test('find similar: without search plugins the actions are still there and lead to plugin setup', async ({ page }) => {
   const errors = trackErrors(page)
+  const posts: string[] = []
+  page.on('request', (r) => { if (r.method() === 'POST' && /\/search\//.test(r.url())) posts.push(r.url()) })
   await setAppearance(page, 'graphite')
-  await signIn(page) // real qBittorrent test container: no Python, no plugins
+  await signIn(page) // real qBittorrent test container: no search plugins
   const row = await addSimTorrent(page)
   await row.click({ button: 'right' })
-  await expect(page.getByRole('menu')).toBeVisible()
-  await expect(page.getByRole('menuitem', { name: 'Search for similar torrents' })).toHaveCount(0)
+  await expect(page.getByRole('menuitem', { name: 'Search for similar torrents' })).toBeVisible()
   await page.keyboard.press('Escape')
   await row.click(); await page.getByRole('button', { name: 'Show details' }).click()
-  await page.getByRole('complementary', { name: 'Torrent details' }).getByRole('tab', { name: 'Files' }).click()
-  await expect(page.getByRole('link', { name: /^Search for / })).toHaveCount(0)
-  await page.goto('/#/search?q=anything&size=123')
-  await expect(page.getByText(/No search plugins are enabled/)).toBeVisible({ timeout: 10_000 })
+  const details = page.getByRole('complementary', { name: 'Torrent details' })
+  await expect(details.getByRole('link', { name: 'Search for similar torrents' })).toBeVisible() // header button
+  await details.getByRole('tab', { name: 'Files' }).click()
+  await details.getByRole('link', { name: /^Search for Sample\.Show\.S01E01/ }).click() // per-file button
+  // The page explains what is missing and offers the fix; the query is kept for when a plugin exists.
+  await expect(page.getByText(/No search plugin is enabled yet/)).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText(/exactly 2\.9 KiB \(3,000 bytes\)/)).toBeVisible()
+  const mgr = page.locator('.plugins')
+  await expect(mgr).toContainText('Python 3')
+  await expect(mgr.getByRole('checkbox', { name: /The Pirate Bay/ })).toBeVisible()
+  await expect(mgr.getByRole('button', { name: 'Install selected…' })).toBeDisabled()
+  // Installing asks first, and cancelling sends nothing.
+  await mgr.getByRole('checkbox', { name: /EZTV/ }).check()
+  await mgr.getByRole('button', { name: 'Install selected…' }).click()
+  const dlg = page.getByRole('alertdialog')
+  await expect(dlg).toContainText('run it on the machine where qBittorrent runs')
+  await dlg.getByRole('button', { name: 'Cancel' }).click()
+  // Custom addresses are validated (https .py only).
+  await mgr.getByLabel('Plugin address').fill('http://example.org/x.py')
+  await expect(mgr.getByText('Only https:// addresses are accepted')).toBeVisible()
+  await expect(mgr.getByRole('button', { name: 'Install…' })).toBeDisabled()
+  expect(posts.filter((u) => /install|enable|uninstall/i.test(u))).toEqual([])
   await removeRow(page, row)
   expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
+})
+
+test('search plugins: enable, update, uninstall and install behave and always ask before installing (endpoints stubbed)', async ({ page }) => {
+  // No Python/plugins in the test container, so only the search endpoints are stubbed (and their POST bodies recorded).
+  const sent: Record<string, string> = {}
+  let installed = [{ name: 'eztv', fullName: 'EZTV', version: '1.2', enabled: false, supportedCategories: [{ id: 'all', name: 'All' }] }]
+  const json = (body: unknown) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(body) })
+  await page.route('**/api/v2/search/plugins', (r) => r.fulfill(json(installed)))
+  for (const ep of ['installPlugin', 'uninstallPlugin', 'enablePlugin', 'updatePlugins']) {
+    await page.route(`**/api/v2/search/${ep}`, async (r) => {
+      sent[ep] = r.request().postData() ?? ''
+      if (ep === 'enablePlugin') installed = installed.map((p) => ({ ...p, enabled: /enable=true/.test(sent[ep] ?? '') }))
+      if (ep === 'installPlugin') installed = [...installed, { name: 'piratebay', fullName: 'The Pirate Bay', version: '3.3', enabled: true, supportedCategories: [{ id: 'all', name: 'All' }] }]
+      if (ep === 'uninstallPlugin') installed = []
+      await r.fulfill({ status: 200, body: '' })
+    })
+  }
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  await page.goto('/#/search')
+  const mgr = page.locator('.plugins')
+  await expect(mgr.getByRole('row').filter({ hasText: 'EZTV' })).toBeVisible({ timeout: 10_000 })
+  await expect(mgr.getByRole('switch', { name: 'Enable EZTV' })).toHaveCount(1)
+  await expect(mgr.getByRole('checkbox', { name: /EZTV/ })).toHaveCount(0) // installed, so no longer offered as "official, not installed"
+  await expect(mgr.getByRole('checkbox', { name: /Pirate Bay/ })).toBeVisible()
+  // enable
+  await mgr.getByRole('switch', { name: 'Enable EZTV' }).click() // state changes after the server confirms, so click rather than check()
+  await expect.poll(() => sent['enablePlugin']).toContain('names=eztv')
+  expect(sent['enablePlugin']).toContain('enable=true')
+  await expect(page.getByLabel('Search for torrents')).toBeVisible() // now there is an enabled plugin: the search form appears
+  // update
+  await mgr.getByRole('button', { name: 'Update plugins' }).click()
+  await expect.poll(() => 'updatePlugins' in sent).toBe(true)
+  // install an official plugin: only after confirming, from the official repository
+  await mgr.getByRole('checkbox', { name: /Pirate Bay/ }).check()
+  await mgr.getByRole('button', { name: 'Install selected…' }).click()
+  expect(sent['installPlugin']).toBeUndefined()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Install' }).click()
+  await expect.poll(() => sent['installPlugin']).toContain('raw.githubusercontent.com')
+  expect(decodeURIComponent(sent['installPlugin'] ?? '')).toContain('qbittorrent/search-plugins/master/nova3/engines/piratebay.py')
+  await expect(mgr.getByRole('row').filter({ hasText: 'The Pirate Bay' })).toBeVisible({ timeout: 10_000 })
+  // custom address: a stronger warning
+  await mgr.getByLabel('Plugin address').fill('https://example.org/mine.py')
+  await mgr.getByRole('button', { name: 'Install…' }).click()
+  await expect(page.getByRole('alertdialog')).toContainText('Only continue if you trust whoever wrote it')
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click()
+  // uninstall asks too
+  await mgr.getByRole('button', { name: 'Uninstall EZTV' }).click()
+  expect(sent['uninstallPlugin']).toBeUndefined()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Uninstall' }).click()
+  await expect.poll(() => sent['uninstallPlugin']).toContain('names=eztv')
 })
 
 test('find similar: search for a torrent or an incomplete file, with exact-size matches marked (search endpoints stubbed)', async ({ page }) => {

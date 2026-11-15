@@ -4,6 +4,16 @@ All notable changes to Torvia are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+### Added
+- **Search plugin manager** on the Search page: see installed plugins, enable or disable them, update them, uninstall, install qBittorrent's official plugins in one click, or install one from an https address. Every install asks first, because a plugin is a Python program qBittorrent downloads and runs on the server (a custom address gets a stronger warning). The panel also explains that search needs Python 3 on the qBittorrent machine and at least one enabled plugin.
+- **A magnifier in the details header** that runs *Search for similar torrents* for the selected torrent.
+
+### Changed
+- *Search for similar torrents* and the per-file search button are now always shown. In 0.1.2 they were hidden whenever qBittorrent's search wasn't set up, with no hint why. They now lead to the Search page, which explains what is missing and helps fix it; the query and size are kept for when a plugin is enabled.
+
+### Fixed
+- The plugin panel no longer collapses on its own when a plugin gets enabled.
+
 ## [0.1.2] - 2026-11-15
 
 Help for stuck downloads (find similar torrents and files), peer country flags, a resizable details panel in Graphite and Signal, and the Torvia version in the status bar.

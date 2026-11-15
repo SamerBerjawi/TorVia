@@ -8,7 +8,7 @@ const TABLE_KEYS: [string, string][] = [
 ]
 
 export function ShortcutsDialog() {
-  const actionKeys = ACTIONS.filter((a) => a.shortcut && a.shortcut !== '?').map((a) => [a.shortcut === 'Delete' ? 'Delete' : a.shortcut!.toUpperCase(), a.label({ hashes: [], torrents: [], facts: { count: 0 } as never, caps: {} as never, server: {}, searchAvailable: false })])
+  const actionKeys = ACTIONS.filter((a) => a.shortcut && a.shortcut !== '?').map((a) => [a.shortcut === 'Delete' ? 'Delete' : a.shortcut!.toUpperCase(), a.label({ hashes: [], torrents: [], facts: { count: 0 } as never, caps: {} as never, server: {} })])
   return (
     <Modal title="Keyboard shortcuts" size="md" footer={null}>
       <dl className="shortcuts">

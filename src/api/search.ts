@@ -28,6 +28,12 @@ export const searchApi = {
     return ((await r.json()) as { id: number }).id
   },
   results: (id: number, signal?: AbortSignal) => getJson<SearchResults>(`search/results?id=${id}&limit=500&offset=0`, signal),
+  /** Plugins are downloaded and then run by qBittorrent on the server: callers must have asked the user first. */
+  installPlugins: (sources: readonly string[]) => postOrThrow('search/installPlugin', { sources: sources.join('|') }),
+  uninstallPlugins: (names: readonly string[]) => postOrThrow('search/uninstallPlugin', { names: names.join('|') }),
+  enablePlugins: (names: readonly string[], enable: boolean) => postOrThrow('search/enablePlugin', { names: names.join('|'), enable: String(enable) }),
+  /** Asks qBittorrent to check for and fetch newer plugin versions; it finishes in the background. */
+  updatePlugins: () => postOrThrow('search/updatePlugins', {}),
   stop: (id: number) => postOrThrow('search/stop', { id: String(id) }),
   remove: (id: number) => postOrThrow('search/delete', { id: String(id) }),
 }

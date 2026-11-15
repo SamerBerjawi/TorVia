@@ -5,7 +5,6 @@ import { useActionContext } from './actions/useActionContext'
 import { DialogHost } from './dialogs/DialogHost'
 import { openDialog, useDialogs } from './dialogs/dialogStore'
 import { Toaster } from './feedback/Toaster'
-import { loadSearchAvailability } from './searchAvailability'
 import { loadServerInfo, useServerInfo } from './serverInfo'
 import { Icon } from './components/Icon'
 import { useAppearance, useMediaQuery } from './hooks'
@@ -50,7 +49,7 @@ export function App() {
   const [dropping, setDropping] = useState(false)
 
   useEffect(() => {
-    if (connection.kind === 'online') { loadServerInfo(); loadSearchAvailability() }
+    if (connection.kind === 'online') loadServerInfo()
   }, [connection.kind])
 
   // Global keyboard: ⌘/Ctrl+K palette, "/" search, single-key action shortcuts (see actions/catalogue.ts).

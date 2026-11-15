@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react'
 import { detailsApi, type FilePriority, type Peer } from '@/api/details'
 import { countriesUnavailable, peerCountry } from '@/domain/country'
 import { searchHash, searchQueryFromName } from '@/domain/similar'
-import { useSearchAvailable } from '../searchAvailability'
 import { SearchIcon } from '../icons'
 import { buildFileTree, nodeProgress, visibleNodes, type FileNode } from '@/domain/files'
 import { formatBytes, formatPercent, formatSpeed } from '@/domain/format'
@@ -47,7 +46,7 @@ function PriorityCell({ node, hash, onChanged }: { node: FileNode; hash: string;
   )
 }
 
-function NameCell({ node, hash, collapsed, toggle, onChanged, canSearch }: { canSearch: boolean; node: FileNode; hash: string; collapsed: boolean; toggle: () => void; onChanged: () => void }) {
+function NameCell({ node, hash, collapsed, toggle, onChanged }: { node: FileNode; hash: string; collapsed: boolean; toggle: () => void; onChanged: () => void }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(node.name)
   const commit = () => {
@@ -80,7 +79,7 @@ function NameCell({ node, hash, collapsed, toggle, onChanged, canSearch }: { can
       ) : (
         <>
           <span className="ftree__label" title={node.path}><bdi>{node.name}</bdi></span>
-          {canSearch && node.kind === 'file' && node.done < node.size && node.priority !== 0 && (
+          {node.kind === 'file' && node.done < node.size && node.priority !== 0 && (
             <a className="iconbtn iconbtn--sm ftree__rename ftree__find" href={searchHash(searchQueryFromName(node.name), node.size)} aria-label={`Search for ${node.name}`} title="Search for this file in other torrents"><Icon icon={SearchIcon} size={13} /></a>
           )}
           <button type="button" className="iconbtn iconbtn--sm ftree__rename" aria-label={`Rename ${node.name}`} title="Rename" onClick={() => { setDraft(node.name); setEditing(true) }}><Icon icon={RenameIcon} size={13} /></button>
@@ -94,7 +93,6 @@ export function FilesTab({ hash }: { hash: string }) {
   const load = useCallback((s: AbortSignal) => detailsApi.files(hash, s), [hash])
   const state = useDetailData(`files:${hash}`, load)
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
-  const canSearch = useSearchAvailable()
   const reload = () => state.status === 'ok' && state.reload()
   return (
     <Async state={state} empty={(d) => d.length === 0}>
@@ -109,7 +107,7 @@ export function FilesTab({ hash }: { hash: string }) {
                 <tr key={n.path} data-skipped={n.priority === 0 || undefined}>
                   <td className="dtable__name">
                     <NameCell
-                      node={n} hash={hash} canSearch={canSearch} collapsed={collapsed.has(n.path)} onChanged={reload}
+                      node={n} hash={hash} collapsed={collapsed.has(n.path)} onChanged={reload}
                       toggle={() => setCollapsed((c) => { const x = new Set(c); if (x.has(n.path)) x.delete(n.path); else x.add(n.path); return x })}
                     />
                   </td>

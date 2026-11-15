@@ -701,3 +701,18 @@
 .searchpage__wanted { margin: 0 0 10px; padding: 8px 12px; border-radius: var(--r-md); background: color-mix(in oklab, var(--accent) 10%, var(--surface)); color: var(--text-2); font-size: 12px; }
 .searchpage__badge { margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: color-mix(in oklab, var(--st-seed) 14%, var(--surface)); border: 1px solid color-mix(in oklab, var(--st-seed) 45%, transparent); color: var(--text); font-size: 11px; font-weight: 600; white-space: nowrap; }
 .ftree__find { display: inline-grid; place-items: center; text-decoration: none; color: inherit; }
+
+/* search plugin manager */
+.plugins { margin-top: 18px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); }
+.plugins > summary { cursor: pointer; font-weight: 600; color: var(--text); }
+.plugins__note { font-size: 12px; color: var(--text-3); }
+.plugins__table { margin: 8px 0; }
+.plugins__official { display: grid; gap: 6px; margin: 12px 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-md); }
+.plugins__official legend { padding: 0 6px; font-size: 12px; color: var(--text-3); }
+.plugins__official label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.plugins__official button { justify-self: start; margin-top: 4px; }
+.plugins input[type='checkbox'] { accent-color: var(--accent); }
+.plugins__url { display: grid; gap: 6px; margin-top: 12px; max-width: 520px; }
+.plugins__url input { width: 100%; height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--input); color: var(--text); font: 13px var(--font-ui); }
+.plugins__url button { justify-self: start; }
+.plugins__url [aria-invalid='true'] { border-color: var(--st-err); }

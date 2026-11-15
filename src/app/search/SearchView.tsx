@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { searchApi, type SearchPlugin, type SearchResult } from '@/api/search'
 import { ApiError } from '@/api/transport'
 import { formatBytes } from '@/domain/format'
 import { commonCategories, displayCount, displaySize, filterResults, sortResults, type ResultSort, type SearchSort } from '@/domain/search'
 import { isSameSize, parseSearchHash } from '@/domain/similar'
 import { notifyError } from '../feedback/toast'
+import { PluginManager } from './PluginManager'
 import { openDialog } from '../dialogs/dialogStore'
 import { useHash } from '../router'
 
@@ -26,11 +27,14 @@ export default function SearchView() {
   const hash = useHash()
   const [wanted, setWanted] = useState<number | null>(null) // size (bytes) we hope to match, from "Search for similar"
 
+  const loadPlugins = useCallback((signal?: AbortSignal) => {
+    searchApi.plugins(signal).then((p) => { setPlugins(p); setLoadError(null) }).catch((e) => !signal?.aborted && setLoadError(e instanceof ApiError ? e.message : 'Could not load search plugins'))
+  }, [])
   useEffect(() => {
     const ctl = new AbortController()
-    searchApi.plugins(ctl.signal).then(setPlugins).catch((e) => !ctl.signal.aborted && setLoadError(e instanceof ApiError ? e.message : 'Could not load search plugins'))
+    loadPlugins(ctl.signal)
     return () => ctl.abort()
-  }, [])
+  }, [loadPlugins])
 
   // Poll while running; clean up the server-side job when leaving.
   useEffect(() => {
@@ -96,10 +100,9 @@ export default function SearchView() {
   return (
     <div className="searchpage">
       <header className="settings__head"><h1>Search</h1></header>
+      {pattern && enabled.length === 0 && wanted !== null && <p className="searchpage__wanted">Looking for <strong>{pattern}</strong>, exactly {formatBytes(wanted)} ({wanted.toLocaleString()} bytes). Set up a search plugin below, then search.</p>}
       {enabled.length === 0 ? (
-        <p className="panel__empty">
-          No search plugins are enabled. qBittorrent’s search needs Python on the server and at least one plugin, installed in its own “Search engine” window.
-        </p>
+        <p className="panel__empty">No search plugin is enabled yet. Add one below to search for torrents.</p>
       ) : (
         <>
           <form className="searchpage__form" onSubmit={start}>
@@ -153,6 +156,7 @@ export default function SearchView() {
           )}
         </>
       )}
+      <PluginManager plugins={plugins} onChanged={() => loadPlugins()} startOpen={enabled.length === 0} />
     </div>
   )
 }

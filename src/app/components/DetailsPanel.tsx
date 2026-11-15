@@ -2,7 +2,8 @@ import { lazy, Suspense, useState } from 'react'
 import type { Torrent } from '@/api/types'
 import { formatBytes, formatEta, formatPercent, formatRatio, formatSpeed } from '@/domain/format'
 import { STATUS_LABEL, toStatus } from '@/domain/status'
-import { CloseIcon, CopyIcon } from '../icons'
+import { searchHash, searchQueryFromName } from '@/domain/similar'
+import { CloseIcon, CopyIcon, SearchIcon } from '../icons'
 import { useUi } from '../uiStore'
 import { FileIcon } from './FileIcon'
 import { Icon } from './Icon'
@@ -50,6 +51,7 @@ export function DetailsPanel({ hash, torrent, orientation, size }: { hash: strin
         <div className="details__titlerow">
           <FileIcon name={torrent.name} size={18} />
           <h2 className="details__title"><bdi>{torrent.name}</bdi></h2>
+          <a className="iconbtn" href={searchHash(searchQueryFromName(torrent.name), torrent.size)} aria-label="Search for similar torrents" title="Search for similar torrents (for a stuck download)"><Icon icon={SearchIcon} /></a>
           <button type="button" className="iconbtn" aria-label="Close details" onClick={close}><Icon icon={CloseIcon} /></button>
         </div>
         <div className="details__status"><i aria-hidden="true" />{STATUS_LABEL[s]} · {formatPercent(torrent.progress)}</div>
