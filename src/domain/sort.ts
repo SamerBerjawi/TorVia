@@ -1,6 +1,6 @@
 import type { Torrent } from '@/api/types'
 
-export const SORT_KEYS = ['name', 'state', 'progress', 'size', 'dlspeed', 'upspeed', 'eta', 'ratio', 'added_on'] as const
+export const SORT_KEYS = ['name', 'state', 'progress', 'size', 'dlspeed', 'upspeed', 'eta', 'ratio', 'added_on', 'category', 'num_seeds', 'num_leechs', 'downloaded', 'uploaded', 'last_activity'] as const
 export type SortKey = (typeof SORT_KEYS)[number]
 export interface Sort { key: SortKey; dir: 'asc' | 'desc' }
 

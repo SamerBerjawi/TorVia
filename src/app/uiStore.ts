@@ -31,7 +31,7 @@ interface UiState {
   prune(exists: (hash: string) => boolean): void
 }
 
-const NUMERIC_DEFAULT_DESC = new Set<SortKey>(['progress', 'size', 'dlspeed', 'upspeed', 'ratio', 'added_on'])
+const NUMERIC_DEFAULT_DESC = new Set<SortKey>(['progress', 'size', 'dlspeed', 'upspeed', 'ratio', 'added_on', 'num_seeds', 'num_leechs', 'downloaded', 'uploaded', 'last_activity'])
 
 export const useUi = create<UiState>()((set, get) => ({
   status: 'all',

@@ -8,6 +8,10 @@ import { useUi } from '../uiStore'
 import type { TableItem } from '../useTorrentView'
 import { TorrentContextMenu } from '../actions/ActionMenus'
 import type { ActionContext } from '../actions/catalogue'
+import { resolveColumns } from '@/domain/columns'
+import { useColumnPrefs } from '../columnPrefs'
+import { useAppearance } from '../hooks'
+import { ColumnChooser } from './ColumnChooser'
 import { Icon } from './Icon'
 import { statusStyle } from './Status'
 
@@ -20,6 +24,12 @@ export interface Column {
   align?: 'end'
   /** Hidden below 800px. */
   wide?: boolean
+  /** Always shown (cannot be hidden in the chooser). */
+  locked?: boolean
+  /** Not listed in the chooser at all (decorative). */
+  hideInChooser?: boolean
+  /** Hidden until the user enables it. */
+  defaultHidden?: boolean
   render: (t: Torrent) => ReactNode
 }
 
@@ -35,6 +45,7 @@ interface Props {
   ctx: ActionContext
 }
 
+const CHOOSER_WIDTH = '28px'
 const GROUP_HEIGHT = 44
 const HEADER_HEIGHT = 32
 
@@ -62,6 +73,7 @@ const Row = memo(function Row(props: {
           {c.render(torrent)}
         </div>
       ))}
+      <span aria-hidden="true" />
     </div>
   )
 })
@@ -79,15 +91,20 @@ function GroupHeader({ item, top }: { item: Extract<TableItem, { type: 'group' }
 }
 
 export function TorrentTable({ columns: allColumns, items, order, rowHeight, label, emptyText, narrow, ctx }: Props) {
-  // Phones: drop secondary columns and relax the name column's minimum so nothing scrolls sideways.
-  const columns = useMemo(
-    () => (narrow ? allColumns.filter((c) => !c.wide).map((c) => ({ ...c, width: c.width.replace('minmax(220px', 'minmax(120px').replace(/^1[5-7]0px$/, '110px') })) : allColumns),
-    [allColumns, narrow],
-  )
-  const template = useMemo(() => columns.map((c) => c.width).join(' '), [columns])
+  const { skin } = useAppearance()
+  const prefs = useColumnPrefs(skin)
+  const resolved = useMemo(() => resolveColumns(allColumns, prefs), [allColumns, prefs])
+  const labels = useMemo(() => new Map(allColumns.filter((c) => !c.hideInChooser && c.label).map((c) => [c.id, c.label])), [allColumns])
+  // The user's choice first; then phones drop secondary columns and relax the name column's minimum so nothing scrolls sideways.
+  const columns = useMemo(() => {
+    const byId = new Map(allColumns.map((c) => [c.id, c]))
+    const chosen = resolved.filter((r) => r.visible).map((r) => byId.get(r.id)!)
+    return narrow ? chosen.filter((c) => !c.wide).map((c) => ({ ...c, width: c.width.replace('minmax(220px', 'minmax(120px').replace(/^1[5-7]0px$/, '110px') })) : chosen
+  }, [allColumns, resolved, narrow])
+  const template = useMemo(() => [...columns.map((c) => c.width), CHOOSER_WIDTH].join(' '), [columns])
   // Narrowest width at which every column still fits; below it the table scrolls horizontally.
   const minWidth = useMemo(
-    () => columns.reduce((sum, c) => sum + (Number(/(\d+)px/.exec(c.width)?.[1]) || 0), 0) + (columns.length - 1) * 12 + 48,
+    () => columns.reduce((sum, c) => sum + (Number(/(\d+)px/.exec(c.width)?.[1]) || 0), 0) + columns.length * 12 + 48 + 36,
     [columns],
   )
   const { selected, focused, sort, select, selectAll, clearSelection, focus, openDetails, closeDetails, detailsOpen, sortBy } = useUi()
@@ -174,6 +191,9 @@ export function TorrentTable({ columns: allColumns, items, order, rowHeight, lab
               </div>
             )
           })}
+          <div role="columnheader" className="thcell thcell--chooser" aria-label="Column options">
+            <ColumnChooser skin={skin} columns={resolved} labels={labels} />
+          </div>
         </div>
         {items.length === 0 ? (
           <div className="tempty"><Icon icon={EmptyIcon} size={28} /><p>{emptyText}</p></div>
