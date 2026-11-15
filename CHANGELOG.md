@@ -4,6 +4,10 @@ All notable changes to Torvia are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-15
+
+Help for stuck downloads (find similar torrents and files), peer country flags, a resizable details panel in Graphite and Signal, and the Torvia version in the status bar.
+
 ### Added
 - **Find similar torrents for stuck downloads:** *Search for similar torrents* (right-click menu and command palette) opens Search pre-filled with the torrent's name cleaned of encode tags and release group, and a *Search for this file* button appears next to every incomplete file in the Files tab. Results with exactly the same size are marked *Same size*. The buttons only appear when qBittorrent's search is usable (Python and an enabled plugin). Matching and moving files is still manual: put the matching file in the torrent's folder under the same name and run *Recheck*.
 - **Graphite and Signal:** the details panel beside the table can now be resized by dragging the handle on its left edge (or with the left and right arrow keys; Home and End jump to the widest and narrowest; double-click resets). The width is remembered. It always leaves room for the table.
@@ -74,6 +78,7 @@ First public preview. A complete alternative WebUI for qBittorrent 5.0 or newer:
 - Speed history charts start when the page opens; qBittorrent does not provide history.
 - System notifications need HTTPS or localhost; over plain HTTP only in-page messages are available.
 
-[Unreleased]: https://github.com/SamerBerjawi/torvia/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/SamerBerjawi/torvia/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/SamerBerjawi/torvia/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/SamerBerjawi/torvia/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/SamerBerjawi/torvia/releases/tag/v0.1.0

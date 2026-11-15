@@ -1,6 +1,6 @@
 {
   "name": "torvia",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "MIT",
   "private": true,
   "description": "Next-generation alternative WebUI for qBittorrent",
