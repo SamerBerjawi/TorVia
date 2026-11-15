@@ -5,6 +5,7 @@ import { diffPrefs, fromDisplay, isActive, SECTIONS, toDisplay, validateField, v
 import { MODE_LABEL, MODES, SKIN_LABEL, SKINS, setAppearance } from '@/ui/theme'
 import { run } from '../actions/run'
 import { useAppearance } from '../hooks'
+import { LibrarySection } from './LibrarySection'
 
 type Load = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; prefs: Preferences }
 
@@ -135,7 +136,7 @@ export default function SettingsView() {
         <input type="search" className="settings__search" placeholder="Search settings" aria-label="Search settings" value={query} onChange={(e) => setQuery(e.target.value)} />
       </header>
       <nav className="settings__nav" aria-label="Settings sections">
-        {SECTIONS.filter((s) => fields.some((f) => f.section === s.id)).map((s) => <a key={s.id} href={`#/settings/${s.id}`} onClick={(e) => { e.preventDefault(); document.getElementById(`sec-${s.id}`)?.scrollIntoView({ block: 'start' }) }}>{s.label}</a>)}
+        {[...SECTIONS.filter((s) => fields.some((f) => f.section === s.id)), ...(query.trim() === '' ? [{ id: 'library', label: 'Categories & tags' }, { id: 'appearance', label: 'Appearance' }] : [])].map((s) => <a key={s.id} href={`#/settings/${s.id}`} onClick={(e) => { e.preventDefault(); document.getElementById(`sec-${s.id}`)?.scrollIntoView({ block: 'start' }) }}>{s.label}</a>)}
       </nav>
       <div className="settings__body">
         {SECTIONS.map((s) => {
@@ -150,6 +151,7 @@ export default function SettingsView() {
             </section>
           )
         })}
+        {query.trim() === '' && <LibrarySection />}
         {query.trim() === '' && <AppearanceSection />}
         {fields.length === 0 && <p className="panel__empty">No settings match “{query}”.</p>}
         <p className="settings__note">Web UI port, credentials and certificates are not editable here, so a typo can’t lock you out. Change them in qBittorrent itself.</p>

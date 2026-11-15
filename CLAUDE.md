@@ -54,6 +54,7 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 - Add a test for any change to `src/sync/` or `src/domain/` (stats aggregations live in `domain/stats.ts`).
 
 ## Settings
+- Categories & tags management lives in `app/settings/LibrarySection.tsx`; name rules are in `domain/labels.ts`.
 - `domain/settingsSchema.ts` declares which qBittorrent preferences are exposed (pure, tested); `app/settings/SettingsView.tsx` renders it. Fields the server doesn't report are hidden, never faked. Add a preference by adding one entry to `FIELDS`.
 - Web UI port/credentials/certificates are deliberately not editable (lock-out risk). Saves send only changed keys via `app/setPreferences`.
 - Full-page routes render through the layouts' `page` slot (lazy-loaded).
