@@ -7,7 +7,7 @@ Alternative WebUI for qBittorrent. Static build only; **no backend**. Verify wit
 - `src/sync/`   `sync/maindata` engine: `reconcile.ts` (pure reducer: torrents, categories, tags, server state), `connection.ts` (pure state machine), `history.ts` (speed samples), `engine.ts` (side effects). No React.
 - `src/domain/` pure logic: `files.ts` (file tree), `filters.ts` (status views), `query.ts` (query language), `sort.ts`, `fileKind.ts` (extension → file kind), `format.ts`, `status.ts`. No React.
 - `src/ui/`     `theme.ts` (skin × mode, no React), `tokens.css` (all colours/fonts), `app.css`, `login.css`.
-- `src/app/`    React. `store.ts` (engine snapshot), `uiStore.ts` (zustand: filters, sort, selection, details), `useTorrentView.ts` (derived rows/groups/counts), `router.ts` (hash routes: `#/`, `#/statistics`), `columns.tsx` (per-skin column sets), `components/`, `layouts/` (one per skin), `charts/` (lazy-loaded: `Charts.tsx` wrappers, `StatisticsView`, `TorrentStats`).
+- `src/app/`    React. `store.ts` (engine snapshot), `uiStore.ts` (zustand: filters, sort, selection, details), `useTorrentView.ts` (derived rows/groups/counts), `router.ts` (hash routes: `#/`, `#/statistics`, `#/settings`), `columns.tsx` (per-skin column sets), `components/`, `layouts/` (one per skin), `charts/` (lazy-loaded: `Charts.tsx` wrappers, `StatisticsView`, `TorrentStats`).
 - `src/vendor/bklit/` Bklit UI charts (MIT), **generated** by `scripts/vendor-bklit.mjs` — never edit by hand; import only via `src/app/charts/Charts.tsx`.
 - `src/entries/login` → `dist/torvia/public`; `src/entries/app` → `dist/torvia/private`.
 
@@ -52,3 +52,8 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 - No silent failures; destructive actions need explicit confirmation (remove, recheck, delete files).
 - No buttons for features that don't work yet.
 - Add a test for any change to `src/sync/` or `src/domain/` (stats aggregations live in `domain/stats.ts`).
+
+## Settings
+- `domain/settingsSchema.ts` declares which qBittorrent preferences are exposed (pure, tested); `app/settings/SettingsView.tsx` renders it. Fields the server doesn't report are hidden, never faked. Add a preference by adding one entry to `FIELDS`.
+- Web UI port/credentials/certificates are deliberately not editable (lock-out risk). Saves send only changed keys via `app/setPreferences`.
+- Full-page routes render through the layouts' `page` slot (lazy-loaded).

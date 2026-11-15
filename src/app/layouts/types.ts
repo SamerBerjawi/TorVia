@@ -8,8 +8,8 @@ export interface LayoutProps {
   narrow: boolean
   version: string | null
   route: Route
-  /** Rendered Statistics view when route is 'statistics', else null. */
-  statistics: ReactNode
+  /** Rendered full-page view (statistics, settings) instead of the torrent list, else null. */
+  page: ReactNode
   /** Actions for the current selection. */
   ctx: ActionContext
 }

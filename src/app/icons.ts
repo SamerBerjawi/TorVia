@@ -3,6 +3,7 @@
  * Import icons from here, never from the package directly, so swaps and audits happen in one place.
  */
 export {
+  Settings01Icon as SettingsIcon,
   Add01Icon as AddIcon,
   Alert02Icon as AlertIcon,
   ArrowDown01Icon as ChevronDownIcon,

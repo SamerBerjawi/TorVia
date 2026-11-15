@@ -18,7 +18,7 @@ import { useUi } from '../uiStore'
 import type { LayoutProps } from './types'
 
 /** C · Signal — query-first console: token bar, saved views, grouped rows, keyboard hints. */
-export function SignalLayout({ view, narrow, version, route, statistics, ctx }: LayoutProps) {
+export function SignalLayout({ view, narrow, version, route, page, ctx }: LayoutProps) {
   const { data, connection, history } = useEngine()
   const { focused, detailsOpen, groupByCategory, setGroupByCategory, setQuery, query, sort } = useUi()
   const saved = useSavedViews()
@@ -39,7 +39,7 @@ export function SignalLayout({ view, narrow, version, route, statistics, ctx }: 
         <AppearanceMenu compact />
         <SignOutButton />
       </header>
-      {statistics ? <main className="main main--stats">{statistics}</main> : <>
+      {page ? <main className="main main--stats">{page}</main> : <>
       <QueryBar view={view} />
       <div className="viewsrow">
         {saved.length > 0 && <Icon icon={SavedViewIcon} size={14} />}

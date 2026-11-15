@@ -18,7 +18,7 @@ import type { LayoutProps } from './types'
 const SEGMENTS: StatusFilter[] = ['all', 'downloading', 'seeding', 'completed', 'stopped', 'errored']
 
 /** B · Paper — native-desktop toolbar with status segments, slim source list, details pane below. */
-export function PaperLayout({ view, narrow, version, route, statistics, ctx }: LayoutProps) {
+export function PaperLayout({ view, narrow, version, route, page, ctx }: LayoutProps) {
   const { data } = useEngine()
   const { status, setStatus, focused, detailsOpen } = useUi()
   const detail = detailsOpen && focused ? data.torrents.get(focused) : undefined
@@ -28,13 +28,13 @@ export function PaperLayout({ view, narrow, version, route, statistics, ctx }: L
         <div className="topbar__brand"><BrandMark /><span className="brandname">Torvia</span></div>
         <RouteNav route={route} variant="tabs" />
         <span className="topbar__spacer" />
-        {!statistics && <SelectionBar ctx={ctx} variant="toolbar" />}
-        {!statistics && <SearchBox placeholder="Search" />}
+        {!page && <SelectionBar ctx={ctx} variant="toolbar" />}
+        {!page && <SearchBox placeholder="Search" />}
         <AddButton variant="compact" />
         <AppearanceMenu compact />
         <SignOutButton />
       </header>
-      {!statistics && (
+      {!page && (
         <div className="scopebar">
         <div className="segmented segmented--toolbar" role="group" aria-label="Status filter">
             {SEGMENTS.map((s) => (
@@ -48,7 +48,7 @@ export function PaperLayout({ view, narrow, version, route, statistics, ctx }: L
         </div>
       )}
       <div className="shell__body">
-        {statistics ? <main className="main main--stats">{statistics}</main> : <>
+        {page ? <main className="main main--stats">{page}</main> : <>
         <Sidebar view={view} showStatus={false} />
         <main className="main">
           <ConnectionBanner />

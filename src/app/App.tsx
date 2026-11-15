@@ -17,6 +17,7 @@ import { engine, useEngine } from './store'
 import { useTorrentView } from './useTorrentView'
 
 const StatisticsView = lazy(() => import('./charts/StatisticsView'))
+const SettingsView = lazy(() => import('./settings/SettingsView'))
 
 const isTyping = (el: Element | null) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable)
 
@@ -118,13 +119,17 @@ export function App() {
   }
   if (connection.kind === 'connecting') return <div className="fullscreen" role="status">Connecting to qBittorrent…</div>
 
-  const statistics =
+  const page =
     route === 'statistics' ? (
       <Suspense fallback={<div className="fullscreen">Loading statistics…</div>}>
         <StatisticsView />
       </Suspense>
+    ) : route === 'settings' ? (
+      <Suspense fallback={<div className="fullscreen">Loading settings…</div>}>
+        <SettingsView />
+      </Suspense>
     ) : null
-  const props = { view, narrow, version, route, statistics, ctx }
+  const props = { view, narrow, version, route, page, ctx }
   return (
     <>
       {server.status === 'ready' && !server.caps.supported && (

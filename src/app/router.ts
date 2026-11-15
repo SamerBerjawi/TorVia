@@ -2,12 +2,13 @@ import { useSyncExternalStore } from 'react'
 
 /**
  * Hash routing (qBittorrent has no SPA fallback, so deep links must live in the hash).
- * Routes: '#/' torrents, '#/statistics'.
+ * Routes: '#/' torrents, '#/statistics', '#/settings'.
  */
-export type Route = 'torrents' | 'statistics'
+export type Route = 'torrents' | 'statistics' | 'settings'
 
 function parse(): Route {
-  return location.hash.replace(/^#\/?/, '').split(/[?/]/)[0] === 'statistics' ? 'statistics' : 'torrents'
+  const first = location.hash.replace(/^#\/?/, '').split(/[?/]/)[0]
+  return first === 'statistics' || first === 'settings' ? first : 'torrents'
 }
 
 const subscribe = (l: () => void) => {

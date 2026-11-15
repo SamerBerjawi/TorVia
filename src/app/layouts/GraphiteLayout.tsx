@@ -16,7 +16,7 @@ import { useUi } from '../uiStore'
 import type { LayoutProps } from './types'
 
 /** A · Graphite — sidebar, table, details on the right. Calm and dense. */
-export function GraphiteLayout({ view, narrow, version, route, statistics, ctx }: LayoutProps) {
+export function GraphiteLayout({ view, narrow, version, route, page, ctx }: LayoutProps) {
   const { data } = useEngine()
   const { focused, detailsOpen, openDetails, closeDetails } = useUi()
   const detail = detailsOpen && focused ? data.torrents.get(focused) : undefined
@@ -24,7 +24,7 @@ export function GraphiteLayout({ view, narrow, version, route, statistics, ctx }
     <div className="shell">
       <div className="shell__body">
         <Sidebar view={view} version={version} route={route} />
-        {statistics ? <main className="main main--stats">{statistics}</main> : <>
+        {page ? <main className="main main--stats">{page}</main> : <>
         <main className="main">
           <div className="toolbar">
             <SearchBox placeholder="Filter — try cat:linux size:>1GB" hint="/" />

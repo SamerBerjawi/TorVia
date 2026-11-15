@@ -152,3 +152,35 @@ test('files tab: tree, folder priority and rename on a real torrent', async ({ p
   await expect(row).toHaveCount(0, { timeout: 10_000 })
   expect(errors).toEqual([])
 })
+
+test('settings: search, validate, save and persist a preference', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  await page.getByRole('link', { name: 'Settings' }).click()
+  await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible()
+  // Search narrows the list.
+  await page.getByLabel('Search settings').fill('turtle')
+  await expect(page.getByLabel('Alternative download limit')).toBeVisible()
+  await expect(page.getByLabel('Listening port')).toHaveCount(0)
+  await page.getByLabel('Search settings').fill('')
+  // Validation blocks saving.
+  const port = page.getByLabel('Listening port')
+  const original = await port.inputValue()
+  await port.fill('70000')
+  await expect(page.getByText('At most 65535')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Save' })).toBeDisabled()
+  await port.fill(original)
+  // Save a real change and see it persist across a reload.
+  const limit = page.getByLabel(/^Download limit/)
+  await limit.fill('750')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('Saved 1 setting')).toBeVisible()
+  await page.reload()
+  await expect(page.getByLabel(/^Download limit/)).toHaveValue('750')
+  // Restore.
+  await page.getByLabel(/^Download limit/).fill('0')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('Saved 1 setting')).toBeVisible()
+  expect(errors).toEqual([])
+})
