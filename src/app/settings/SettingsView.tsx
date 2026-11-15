@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { preferencesApi, type Preferences } from '@/api/preferences'
 import { ApiError } from '@/api/transport'
-import { diffPrefs, fromDisplay, isActive, SECTIONS, toDisplay, validateField, visibleFields, type Field } from '@/domain/settingsSchema'
+import { diffPrefs, fromDisplay, idleMinutes, idleSeconds, IDLE_DEFAULT_SECONDS, isActive, SECTIONS, toDisplay, validateField, visibleFields, type Field } from '@/domain/settingsSchema'
 import { run } from '../actions/run'
 import { AppearancePicker } from '../components/AppearancePicker'
 import { LibrarySection } from './LibrarySection'
@@ -15,7 +15,26 @@ function FieldRow({ field, value, disabled, error, onChange }: { field: Field; v
   const hint = `${id}-hint`
   const describedBy = error ? `${hint} ${id}-err` : field.help ? hint : undefined
   let control: React.ReactNode
-  if (field.type === 'bool') {
+  if (field.type === 'timeout') {
+    const seconds = typeof value === 'number' ? value : Number.NaN
+    const never = Number.isFinite(seconds) && seconds <= 0
+    const minutes = Number.isFinite(seconds) ? idleMinutes(seconds) : null
+    control = (
+      <span className="setting__idle">
+        <span className="setting__num">
+          <input id={id} type="number" inputMode="decimal" min={1} step={1} value={never || minutes === null ? '' : minutes} placeholder={never ? 'Never' : undefined} disabled={disabled || never}
+            aria-invalid={error ? true : undefined} aria-describedby={describedBy}
+            onChange={(e) => onChange(e.target.value === '' ? Number.NaN : idleSeconds(e.target.valueAsNumber))} />
+          <span className="muted">minutes</span>
+        </span>
+        <label className="setting__never">
+          <input type="checkbox" role="switch" className="switch" aria-label="Never sign out" checked={never} disabled={disabled}
+            onChange={(e) => onChange(e.target.checked ? 0 : IDLE_DEFAULT_SECONDS)} />
+          Never sign out
+        </label>
+      </span>
+    )
+  } else if (field.type === 'bool') {
     control = <input id={id} type="checkbox" className="switch" role="switch" checked={value === true} disabled={disabled} aria-describedby={describedBy} onChange={(e) => onChange(e.target.checked)} />
   } else if (field.type === 'select') {
     control = (

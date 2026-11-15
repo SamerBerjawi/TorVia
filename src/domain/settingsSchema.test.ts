@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { diffPrefs, FIELDS, fromDisplay, isActive, toDisplay, validateField, visibleFields } from './settingsSchema'
+import { diffPrefs, FIELDS, fromDisplay, idleMinutes, idleSeconds, isActive, toDisplay, validateField, visibleFields } from './settingsSchema'
 
 const field = (key: string) => FIELDS.find((f) => f.key === key)!
 
@@ -7,7 +7,8 @@ describe('settings schema', () => {
   it('has unique keys and never exposes lock-out settings', () => {
     const keys = FIELDS.map((f) => f.key)
     expect(new Set(keys).size).toBe(keys.length)
-    expect(keys.filter((k) => k.startsWith('web_ui') || k === 'bypass_local_auth')).toEqual([])
+    // Session timeout is safe (too short just signs you out); port, credentials, certificates and auth bypass could lock you out.
+    expect(keys.filter((k) => (k.startsWith('web_ui') && k !== 'web_ui_session_timeout') || k === 'bypass_local_auth')).toEqual([])
   })
   it('hides fields the server does not report', () => {
     const f = visibleFields({ save_path: '/d', dht: true })
@@ -39,5 +40,25 @@ describe('settings schema', () => {
     expect(isActive(field('temp_path'), { temp_path_enabled: false })).toBe(false)
     expect(isActive(field('temp_path'), { temp_path_enabled: true })).toBe(true)
     expect(isActive(field('save_path'), {})).toBe(true)
+  })
+  it('idle sign-out: minutes on screen, seconds on the wire, 0 = never', () => {
+    expect(idleMinutes(3600)).toBe(60)
+    expect(idleMinutes(90)).toBe(1.5)
+    expect(idleMinutes(0)).toBeNull()
+    expect(idleMinutes(-1)).toBeNull()
+    expect(idleSeconds(15)).toBe(900)
+    expect(idleSeconds(1.5)).toBe(90)
+  })
+  it('validates the idle timeout', () => {
+    const f = field('web_ui_session_timeout')
+    expect(validateField(f, 0)).toBeNull() // never
+    expect(validateField(f, 900)).toBeNull()
+    expect(validateField(f, 59)).toBe('At least 1 minute')
+    expect(validateField(f, 365 * 24 * 3600 + 1)).toMatch(/At most 1 year/)
+    expect(validateField(f, Number.NaN)).toBe('Enter a number of minutes')
+  })
+  it('is found by plain-language searches', () => {
+    const prefs = { web_ui_session_timeout: 3600, dht: true }
+    for (const q of ['sign out', 'logout', 'idle', 'session']) expect(visibleFields(prefs, q).map((x) => x.key), q).toContain('web_ui_session_timeout')
   })
 })

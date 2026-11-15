@@ -6,7 +6,7 @@ import type { Preferences } from '@/api/preferences'
  * Web UI port, credentials, certificates and host validation are deliberately absent: a wrong value
  * there locks the user out of the very UI they are editing with.
  */
-export type FieldType = 'bool' | 'int' | 'float' | 'text' | 'select' | 'rate'
+export type FieldType = 'bool' | 'int' | 'float' | 'text' | 'select' | 'rate' | 'timeout'
 
 export interface Field {
   key: string
@@ -31,6 +31,7 @@ export const SECTIONS = [
   { id: 'connection', label: 'Connection' },
   { id: 'queueing', label: 'Queueing' },
   { id: 'seeding', label: 'BitTorrent & seeding' },
+  { id: 'signin', label: 'Sign-in' },
   { id: 'advanced', label: 'Advanced' },
 ] as const
 export type SectionId = (typeof SECTIONS)[number]['id']
@@ -80,6 +81,11 @@ export const FIELDS: readonly Field[] = [
   { key: 'max_seeding_time_enabled', section: 'seeding', label: 'Limit seeding time', type: 'bool' },
   { key: 'max_seeding_time', section: 'seeding', label: 'Seeding time limit', type: 'int', min: 0, unit: 'minutes', enabledBy: 'max_seeding_time_enabled' },
 
+  {
+    key: 'web_ui_session_timeout', section: 'signin', label: 'Sign out after being idle', type: 'timeout',
+    help: 'How long a sign-in lasts without any activity. Torvia keeps the session alive while it is open, so this mostly applies after you close the tab or your device sleeps. “Never” keeps you signed in until you sign out: use it only on devices you trust.',
+    keywords: 'session logout log out sign out idle inactivity expire timeout cookie stay signed in',
+  },
   { key: 'announce_to_all_trackers', section: 'advanced', label: 'Announce to all trackers in a tier', type: 'bool' },
   { key: 'announce_to_all_tiers', section: 'advanced', label: 'Announce to all tiers', type: 'bool' },
   { key: 'recheck_completed_torrents', section: 'advanced', label: 'Recheck torrents on completion', type: 'bool' },
@@ -110,6 +116,13 @@ export function diffPrefs(original: Preferences, draft: Draft): Preferences {
 /** Returns an error message, or null when the value is acceptable. */
 export function validateField(f: Field, value: string | number | boolean | undefined): string | null {
   if (f.type === 'bool' || f.type === 'select') return null
+  if (f.type === 'timeout') {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return 'Enter a number of minutes'
+    if (value <= 0) return null // 0 = never sign out
+    if (value < IDLE_MIN_SECONDS) return 'At least 1 minute'
+    if (value > IDLE_MAX_SECONDS) return 'At most 1 year (525,600 minutes)'
+    return null
+  }
   if (f.type === 'text') return typeof value === 'string' && value.trim() === '' && f.key !== 'temp_path' ? 'Required' : null
   if (typeof value !== 'number' || !Number.isFinite(value)) return 'Enter a number'
   if (f.type !== 'float' && f.type !== 'rate' && !Number.isInteger(value)) return 'Enter a whole number'
@@ -117,6 +130,14 @@ export function validateField(f: Field, value: string | number | boolean | undef
   if (f.max !== undefined && value > f.max) return `At most ${f.max}`
   return null
 }
+
+/** Idle sign-out is seconds on the wire and minutes on screen; 0 (or less) means the session never expires. */
+export const IDLE_MIN_SECONDS = 60
+export const IDLE_MAX_SECONDS = 365 * 24 * 3600
+export const IDLE_DEFAULT_SECONDS = 3600
+/** Minutes for display (up to two decimals), or null when sessions never expire. */
+export const idleMinutes = (seconds: number): number | null => (seconds <= 0 ? null : Math.round((seconds / 60) * 100) / 100)
+export const idleSeconds = (minutes: number): number => Math.round(minutes * 60)
 
 /** `rate` fields are bytes/s on the wire and KiB/s on screen. */
 export const toDisplay = (f: Field, v: number) => (f.type === 'rate' ? Math.round(v / 1024) : v)

@@ -56,7 +56,7 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 ## Settings
 - Categories & tags management lives in `app/settings/LibrarySection.tsx`; name rules are in `domain/labels.ts`.
 - `domain/settingsSchema.ts` declares which qBittorrent preferences are exposed (pure, tested); `app/settings/SettingsView.tsx` renders it. Fields the server doesn't report are hidden, never faked. Add a preference by adding one entry to `FIELDS`.
-- Web UI port/credentials/certificates are deliberately not editable (lock-out risk). Saves send only changed keys via `app/setPreferences`.
+- Web UI port/credentials/certificates are deliberately not editable (lock-out risk). The one `web_ui_*` exception is `web_ui_session_timeout` (shown as minutes in the Sign-in section; 0 = never expires, see qBittorrent `websession.cpp`): a too-short value only signs you out. A test enforces the allow-list. Saves send only changed keys via `app/setPreferences`.
 - Full-page routes render through the layouts' `page` slot (lazy-loaded).
 
 ## Table columns, density, layouts

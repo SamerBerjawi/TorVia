@@ -522,3 +522,42 @@ test('find similar: search for a torrent or an incomplete file, with exact-size 
   await removeRow(page, row)
   expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
 })
+
+test('settings: choose how many idle minutes before sign-out, or turn it off (real qBittorrent preference)', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  await page.getByRole('link', { name: 'Settings' }).click()
+  const section = page.locator('[data-section="signin"]')
+  const minutes = section.getByLabel(/Sign out after being idle/)
+  const never = section.getByRole('switch', { name: 'Never sign out' })
+  const serverValue = async () => ((await (await page.request.get('/api/v2/app/preferences')).json()) as { web_ui_session_timeout: number }).web_ui_session_timeout
+  const save = async () => { await page.getByRole('region', { name: 'Unsaved changes' }).getByRole('button', { name: 'Save', exact: true }).click(); await expect(page.getByText('Saved 1 setting')).toBeVisible() }
+  await expect(minutes).toHaveValue('60') // qBittorrent's default is 3600 seconds
+  await expect(never).not.toBeChecked()
+
+  // A custom number of minutes becomes seconds on the server.
+  await minutes.fill('15'); await save()
+  expect(await serverValue()).toBe(900)
+  await page.reload()
+  await expect(section.getByLabel(/Sign out after being idle/)).toHaveValue('15')
+
+  // Too short is refused before it reaches the server.
+  await minutes.fill('0.5')
+  await expect(section.getByText('At least 1 minute')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Unsaved changes' }).getByRole('button', { name: 'Save', exact: true })).toBeDisabled()
+  await page.getByRole('region', { name: 'Unsaved changes' }).getByRole('button', { name: 'Discard' }).click()
+
+  // "Never sign out" is stored as 0 and disables the number box.
+  await never.check(); await expect(minutes).toBeDisabled(); await save()
+  expect(await serverValue()).toBe(0)
+  await page.reload()
+  await expect(section.getByRole('switch', { name: 'Never sign out' })).toBeChecked()
+  await expect(section.getByLabel(/Sign out after being idle/)).toBeDisabled()
+
+  // Turning it back on restores the default hour; put the server back as we found it.
+  await section.getByRole('switch', { name: 'Never sign out' }).uncheck()
+  await expect(section.getByLabel(/Sign out after being idle/)).toHaveValue('60'); await save()
+  expect(await serverValue()).toBe(3600)
+  expect(errors).toEqual([])
+})
