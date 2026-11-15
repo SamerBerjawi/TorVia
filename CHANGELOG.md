@@ -4,6 +4,10 @@ All notable changes to Torvia are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-15
+
+Update notice, a resizable details panel in Paper, and layout fixes for the installed app and long file names.
+
 ### Added
 - **Update notice:** a dismissible banner when a newer Torvia release exists, plus *Settings → About* with the version, a "Check now" button and an on/off switch. It asks GitHub's public releases page once a day, anonymously; this is Torvia's only request outside qBittorrent. On by default, see `docs/adr/0014-update-check.md`.
 - **Paper:** the details panel can be resized by dragging the handle above it (or with the arrow keys; double-click resets). The height is remembered.
@@ -61,5 +65,6 @@ First public preview. A complete alternative WebUI for qBittorrent 5.0 or newer:
 - Speed history charts start when the page opens; qBittorrent does not provide history.
 - System notifications need HTTPS or localhost; over plain HTTP only in-page messages are available.
 
-[Unreleased]: https://github.com/SamerBerjawi/torvia/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/SamerBerjawi/torvia/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/SamerBerjawi/torvia/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/SamerBerjawi/torvia/releases/tag/v0.1.0
