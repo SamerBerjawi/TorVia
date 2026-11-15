@@ -1,13 +1,16 @@
 import { ApiError, getJson } from '@/api/transport'
 import type { MainDataResponse } from '@/api/types'
 import { backoffMs, transition, type ConnectionEvent, type ConnectionState } from './connection'
-import { emptyHistory, pushSample, type SpeedHistory } from './history'
+import { pushSample, pushTorrentSamples, type Sample } from './history'
 import { emptySyncState, reconcile, type SyncState } from './reconcile'
 
 export interface EngineSnapshot {
   readonly data: SyncState
   readonly connection: ConnectionState
-  readonly history: SpeedHistory
+  /** Global transfer speed samples (client-side, since the page loaded). */
+  readonly history: readonly Sample[]
+  /** Per-torrent speed samples for torrents that have recently transferred. */
+  readonly torrentHistory: ReadonlyMap<string, readonly Sample[]>
 }
 
 const ACTIVE_INTERVAL_MS = 2_000
@@ -20,7 +23,7 @@ const HIDDEN_INTERVAL_MS = 15_000
  * `subscribe` / `getSnapshot` (useSyncExternalStore).
  */
 export class SyncEngine {
-  private snapshot: EngineSnapshot = { data: emptySyncState, connection: { kind: 'connecting' }, history: emptyHistory }
+  private snapshot: EngineSnapshot = { data: emptySyncState, connection: { kind: 'connecting' }, history: [], torrentHistory: new Map() }
   private listeners = new Set<() => void>()
   private timer: ReturnType<typeof setTimeout> | undefined
   private abort: AbortController | undefined
@@ -75,8 +78,10 @@ export class SyncEngine {
       const delta = await getJson<MainDataResponse>(`sync/maindata?rid=${this.snapshot.data.rid}`, abort.signal)
       const data = reconcile(this.snapshot.data, delta)
       this.dispatch({ type: 'sync-ok', at: Date.now() })
-      const history = pushSample(this.snapshot.history, data.serverState.dl_info_speed ?? 0, data.serverState.up_info_speed ?? 0)
-      this.emit(data !== this.snapshot.data ? { data, history } : { history })
+      const t = Date.now() / 1000
+      const history = pushSample(this.snapshot.history, { t, dl: data.serverState.dl_info_speed ?? 0, up: data.serverState.up_info_speed ?? 0 })
+      const torrentHistory = pushTorrentSamples(this.snapshot.torrentHistory, data.torrents, t)
+      this.emit(data !== this.snapshot.data ? { data, history, torrentHistory } : { history, torrentHistory })
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return
       if (e instanceof ApiError && (e.kind === 'unauthenticated' || e.kind === 'forbidden')) {

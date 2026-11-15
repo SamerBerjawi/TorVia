@@ -38,7 +38,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 /** Library navigation. `showStatus` is off for Paper, which puts status views in its toolbar. */
-export function Sidebar({ view, showStatus, header, footer }: { view: View; showStatus: boolean; header?: ReactNode; footer?: ReactNode }) {
+export function Sidebar({ view, showStatus, showFilters = true, header, footer }: { view: View; showStatus: boolean; showFilters?: boolean; header?: ReactNode; footer?: ReactNode }) {
   const { status, category, tag, setStatus, setCategory, setTag } = useUi()
   const statuses: StatusFilter[] = ['all', 'downloading', 'seeding', 'completed', 'running', 'stopped', 'active', 'stalled', 'errored']
   const uncategorised = view.categoryCounts.get('') ?? 0
@@ -53,6 +53,7 @@ export function Sidebar({ view, showStatus, header, footer }: { view: View; show
             ))}
           </Section>
         )}
+        {showFilters && <>
         <Section title="Categories">
           <Item active={category === null} onClick={() => setCategory(null)} icon={I.FolderIcon} label="All categories" count={view.total} />
           {view.categories.map((c) => (
@@ -68,6 +69,7 @@ export function Sidebar({ view, showStatus, header, footer }: { view: View; show
             ))}
           </Section>
         )}
+        </>}
       </div>
       {footer}
     </nav>

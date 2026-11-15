@@ -1,0 +1,54 @@
+/*
+ * Tailwind v4 for the vendored Bklit charts only: theme + utilities, NO preflight
+ * (our own base styles stay authoritative). Chart variables map onto skin tokens,
+ * so every chart follows the active skin and light/dark mode.
+ */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@source '../vendor/bklit';
+@source '../app';
+@custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));
+
+:root {
+  /* shadcn-style names the charts read */
+  --foreground: var(--text);
+  --background: var(--surface);
+  --muted: var(--hover);
+  --muted-foreground: var(--text-4);
+  --popover: var(--raised);
+  --popover-foreground: var(--text);
+
+  --chart-1: var(--st-dl);
+  --chart-2: var(--st-seed);
+  --chart-3: var(--st-check);
+  --chart-4: var(--st-queue);
+  --chart-5: var(--st-meta);
+  --chart-positive: var(--st-seed);
+  --chart-negative: var(--st-err);
+  --chart-background: var(--surface);
+  --chart-foreground: var(--text);
+  --chart-foreground-muted: var(--text-4);
+  --chart-line-primary: var(--st-dl);
+  --chart-line-secondary: var(--st-seed);
+  --chart-crosshair: var(--text-4);
+  --chart-grid: var(--row-border);
+  --chart-brush-border: var(--chart-grid);
+  --chart-tooltip-background: var(--raised);
+  --chart-tooltip-foreground: var(--text);
+  --chart-tooltip-muted: var(--text-4);
+  --chart-marker-background: var(--raised);
+  --chart-marker-border: var(--border-strong);
+  --chart-marker-foreground: var(--text-2);
+  --chart-label: var(--text-3);
+  --chart-indicator-color: var(--text);
+  --chart-indicator-secondary-color: var(--track);
+  --chart-scale-mix: var(--surface);
+  --chart-scale-01: var(--track);
+  --chart-scale-05: var(--chart-1);
+
+  --legend: var(--raised);
+  --legend-foreground: var(--text);
+  --legend-muted: var(--hover);
+  --legend-muted-foreground: var(--text-4);
+  --legend-track: var(--track);
+}

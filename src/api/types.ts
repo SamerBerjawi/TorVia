@@ -23,6 +23,14 @@ export interface Torrent {
   downloaded: number
   uploaded: number
   save_path: string
+  /** Distributed copies in the swarm; -1 when unknown. */
+  availability: number
+  /** Seconds. */
+  time_active: number
+  seeding_time: number
+  last_activity: number
+  ratio_limit: number
+  max_ratio: number
   [key: string]: unknown
 }
 
@@ -41,6 +49,12 @@ export interface ServerState {
   connection_status: string
   use_alt_speed_limits: boolean
   dht_nodes: number
+  alltime_dl: number
+  alltime_ul: number
+  /** Sent as a string, e.g. "1.42". */
+  global_ratio: string
+  total_peer_connections: number
+  total_wasted_session: number
   [key: string]: unknown
 }
 

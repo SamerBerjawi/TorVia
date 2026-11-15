@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import type { Torrent } from '@/api/types'
 import { formatBytes, formatEta, formatPercent, formatRatio, formatSpeed } from '@/domain/format'
 import { STATUS_LABEL, toStatus } from '@/domain/status'
@@ -34,11 +34,14 @@ function Copyable({ label, value }: { label: string; value: string }) {
   )
 }
 
+const TorrentStats = lazy(() => import('../charts/TorrentStats'))
+
 const date = (s: number) => (s > 0 ? new Date(s * 1000).toLocaleString() : '—')
 
 /** Overview of one torrent from sync data. Files/Trackers/Peers tabs come with their endpoints. */
 export function DetailsPanel({ hash, torrent, orientation }: { hash: string; torrent: Torrent; orientation: 'side' | 'bottom' }) {
   const close = useUi((s) => s.closeDetails)
+  const [tab, setTab] = useState<'overview' | 'statistics'>('overview')
   const s = toStatus(torrent.state)
   return (
     <aside className={`details details--${orientation}`} aria-label="Torrent details" style={statusStyle(torrent.state)}>
@@ -51,6 +54,21 @@ export function DetailsPanel({ hash, torrent, orientation }: { hash: string; tor
         <div className="details__status"><i aria-hidden="true" />{STATUS_LABEL[s]} · {formatPercent(torrent.progress)}</div>
         <Progress value={torrent.progress} variant="bar" />
       </header>
+      <div className="tabs" role="tablist" aria-label="Detail sections">
+        {(['overview', 'statistics'] as const).map((t) => (
+          <button key={t} type="button" role="tab" id={`dtab-${t}`} aria-selected={tab === t} aria-controls={`dpanel-${t}`} onClick={() => setTab(t)}>
+            {t === 'overview' ? 'Overview' : 'Statistics'}
+          </button>
+        ))}
+      </div>
+      {tab === 'statistics' ? (
+        <div role="tabpanel" id="dpanel-statistics" aria-labelledby="dtab-statistics" className="details__body">
+          <Suspense fallback={<p className="panel__empty">Loading charts…</p>}>
+            <TorrentStats hash={hash} torrent={torrent} />
+          </Suspense>
+        </div>
+      ) : (
+      <div role="tabpanel" id="dpanel-overview" aria-labelledby="dtab-overview" className="details__body">
       <dl className="details__grid">
         <div className="details__field"><dt>Download</dt><dd>{formatSpeed(torrent.dlspeed)}</dd></div>
         <div className="details__field"><dt>Upload</dt><dd>{formatSpeed(torrent.upspeed)}</dd></div>
@@ -69,6 +87,8 @@ export function DetailsPanel({ hash, torrent, orientation }: { hash: string; tor
         <Copyable label="Save path" value={torrent.save_path ?? ''} />
         <Copyable label="Info hash" value={hash} />
       </div>
+      </div>
+      )}
     </aside>
   )
 }

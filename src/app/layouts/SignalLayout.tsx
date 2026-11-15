@@ -3,6 +3,7 @@ import { SIGNAL_COLUMNS } from '../columns'
 import { AppearanceMenu } from '../components/AppearanceMenu'
 import { SignOutButton } from '../components/Chrome'
 import { DetailsPanel } from '../components/DetailsPanel'
+import { RouteNav } from '../components/RouteNav'
 import { Icon } from '../components/Icon'
 import { QueryBar } from '../components/QueryBar'
 import { Sparkline } from '../components/Sparkline'
@@ -15,7 +16,7 @@ import { useUi } from '../uiStore'
 import type { LayoutProps } from './types'
 
 /** C · Signal — query-first console: token bar, saved views, grouped rows, keyboard hints. */
-export function SignalLayout({ view, narrow, version }: LayoutProps) {
+export function SignalLayout({ view, narrow, version, route, statistics }: LayoutProps) {
   const { data, connection, history } = useEngine()
   const { focused, detailsOpen, groupByCategory, setGroupByCategory, setQuery, query, sort } = useUi()
   const saved = useSavedViews()
@@ -25,15 +26,17 @@ export function SignalLayout({ view, narrow, version }: LayoutProps) {
     <div className="shell">
       <header className="topbar">
         <span className="wordmark">nuvora<span>.</span></span>
+        <RouteNav route={route} variant="text" />
         <span className="topbar__spacer" />
         <div className="meters">
-          <span className="meter meter--dl"><span className="meter__label">DL</span><Sparkline values={history.dl} />{formatSpeed(s.dl_info_speed ?? 0)}</span>
-          <span className="meter meter--up"><span className="meter__label">UL</span><Sparkline values={history.up} />{formatSpeed(s.up_info_speed ?? 0)}</span>
+          <span className="meter meter--dl"><span className="meter__label">DL</span><Sparkline values={history.map((h) => h.dl).slice(-30)} />{formatSpeed(s.dl_info_speed ?? 0)}</span>
+          <span className="meter meter--up"><span className="meter__label">UL</span><Sparkline values={history.map((h) => h.up).slice(-30)} />{formatSpeed(s.up_info_speed ?? 0)}</span>
           <span className="meter meter--conn" data-conn={connection.kind}><i aria-hidden="true" />{connection.kind === 'online' ? 'live' : connectionLabel(connection.kind).toLowerCase()}</span>
         </div>
         <AppearanceMenu compact />
         <SignOutButton />
       </header>
+      {statistics ? <main className="main main--stats">{statistics}</main> : <>
       <QueryBar view={view} />
       <div className="viewsrow">
         {saved.length > 0 && <Icon icon={SavedViewIcon} size={14} />}
@@ -57,6 +60,7 @@ export function SignalLayout({ view, narrow, version }: LayoutProps) {
         </main>
         {detail && focused && <DetailsPanel hash={focused} torrent={detail} orientation="side" />}
       </div>
+      </>}
       <footer className="statusbar statusbar--hints">
         <Icon icon={KeyboardIcon} size={14} />
         <span>↑↓ move</span><span>space select</span><span>↵ details</span><span>esc clear</span><span>/ query</span>

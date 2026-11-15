@@ -3,6 +3,7 @@ import { PAPER_COLUMNS } from '../columns'
 import { AppearanceMenu } from '../components/AppearanceMenu'
 import { BrandMark, SignOutButton } from '../components/Chrome'
 import { DetailsPanel } from '../components/DetailsPanel'
+import { RouteNav } from '../components/RouteNav'
 import { Icon } from '../components/Icon'
 import { SearchBox } from '../components/SearchBox'
 import { Sidebar, STATUS_ICON } from '../components/Sidebar'
@@ -15,7 +16,7 @@ import type { LayoutProps } from './types'
 const SEGMENTS: StatusFilter[] = ['all', 'downloading', 'seeding', 'completed', 'stopped', 'errored']
 
 /** B · Paper — native-desktop toolbar with status segments, slim source list, details pane below. */
-export function PaperLayout({ view, narrow, version }: LayoutProps) {
+export function PaperLayout({ view, narrow, version, route, statistics }: LayoutProps) {
   const { data } = useEngine()
   const { status, setStatus, focused, detailsOpen } = useUi()
   const detail = detailsOpen && focused ? data.torrents.get(focused) : undefined
@@ -23,26 +24,29 @@ export function PaperLayout({ view, narrow, version }: LayoutProps) {
     <div className="shell">
       <header className="topbar">
         <div className="topbar__brand"><BrandMark /><span className="brandname">Nuvora</span></div>
-        <div className="segmented segmented--toolbar" role="group" aria-label="Status filter">
+        <RouteNav route={route} variant="tabs" />
+        {!statistics && <div className="segmented segmented--toolbar" role="group" aria-label="Status filter">
           {SEGMENTS.map((s) => (
             <button key={s} type="button" aria-pressed={status === s} data-tone={s === 'errored' ? 'err' : undefined} onClick={() => setStatus(s)}>
               <Icon icon={STATUS_ICON[s]} size={14} />
               {STATUS_FILTER_LABEL[s]} <span className="segmented__count">{view.counts[s]}</span>
             </button>
           ))}
-        </div>
+        </div>}
         <span className="topbar__spacer" />
-        <SearchBox placeholder="Search" />
+        {!statistics && <SearchBox placeholder="Search" />}
         <AppearanceMenu compact />
         <SignOutButton />
       </header>
       <div className="shell__body">
+        {statistics ? <main className="main main--stats">{statistics}</main> : <>
         <Sidebar view={view} showStatus={false} />
         <main className="main">
           <ConnectionBanner />
           <TorrentTable columns={PAPER_COLUMNS} items={view.flatItems} order={view.order} rowHeight={narrow ? 52 : 40} label="Torrents" emptyText={view.total ? 'No torrents match these filters.' : 'No torrents yet.'} narrow={narrow} />
           {detail && focused && <DetailsPanel hash={focused} torrent={detail} orientation="bottom" />}
         </main>
+        </>}
       </div>
       <StatusBar>
         <span className="statusbar__item">{view.rows.length} of {view.total} shown</span>

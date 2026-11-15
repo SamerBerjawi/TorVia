@@ -1,12 +1,15 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Icon } from './components/Icon'
 import { useAppearance, useMediaQuery, useServerVersion } from './hooks'
 import { DisconnectedIcon } from './icons'
 import { GraphiteLayout } from './layouts/GraphiteLayout'
 import { PaperLayout } from './layouts/PaperLayout'
 import { SignalLayout } from './layouts/SignalLayout'
+import { useRoute } from './router'
 import { engine, useEngine } from './store'
 import { useTorrentView } from './useTorrentView'
+
+const StatisticsView = lazy(() => import('./charts/StatisticsView'))
 
 const isTyping = (el: Element | null) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable)
 
@@ -36,6 +39,7 @@ export function App() {
   const narrow = useMediaQuery('(max-width: 800px)')
   const version = useServerVersion()
   const view = useTorrentView()
+  const route = useRoute()
 
   if (connection.kind === 'unauthenticated') {
     return (
@@ -48,6 +52,12 @@ export function App() {
   }
   if (connection.kind === 'connecting') return <div className="fullscreen" role="status">Connecting to qBittorrent…</div>
 
-  const props = { view, narrow, version }
+  const statistics =
+    route === 'statistics' ? (
+      <Suspense fallback={<div className="fullscreen">Loading statistics…</div>}>
+        <StatisticsView />
+      </Suspense>
+    ) : null
+  const props = { view, narrow, version, route, statistics }
   return skin === 'paper' ? <PaperLayout {...props} /> : skin === 'signal' ? <SignalLayout {...props} /> : <GraphiteLayout {...props} />
 }

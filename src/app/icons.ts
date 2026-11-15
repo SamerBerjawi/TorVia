@@ -51,5 +51,10 @@ export {
   Wifi01Icon as ConnectedIcon,
   WifiDisconnected01Icon as DisconnectedIcon,
   KeyboardIcon,
+  ArrowDataTransferVerticalIcon as ArrowDataIcon,
+  ChartBarLineIcon as StatisticsIcon,
+  PercentCircleIcon as RatioIcon,
+  UserGroupIcon as PeersIcon,
+  ListViewIcon as TorrentsIcon,
   InboxIcon as EmptyIcon,
 } from '@hugeicons/core-free-icons'

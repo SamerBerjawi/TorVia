@@ -7,7 +7,8 @@ Alternative WebUI for qBittorrent. Static build only; **no backend**. Verify wit
 - `src/sync/`   `sync/maindata` engine: `reconcile.ts` (pure reducer: torrents, categories, tags, server state), `connection.ts` (pure state machine), `history.ts` (speed samples), `engine.ts` (side effects). No React.
 - `src/domain/` pure logic: `filters.ts` (status views), `query.ts` (query language), `sort.ts`, `fileKind.ts` (extension → file kind), `format.ts`, `status.ts`. No React.
 - `src/ui/`     `theme.ts` (skin × mode, no React), `tokens.css` (all colours/fonts), `app.css`, `login.css`.
-- `src/app/`    React. `store.ts` (engine snapshot), `uiStore.ts` (zustand: filters, sort, selection, details), `useTorrentView.ts` (derived rows/groups/counts), `columns.tsx` (per-skin column sets), `components/`, `layouts/` (one per skin).
+- `src/app/`    React. `store.ts` (engine snapshot), `uiStore.ts` (zustand: filters, sort, selection, details), `useTorrentView.ts` (derived rows/groups/counts), `router.ts` (hash routes: `#/`, `#/statistics`), `columns.tsx` (per-skin column sets), `components/`, `layouts/` (one per skin), `charts/` (lazy-loaded: `Charts.tsx` wrappers, `StatisticsView`, `TorrentStats`).
+- `src/vendor/bklit/` Bklit UI charts (MIT), **generated** by `scripts/vendor-bklit.mjs` — never edit by hand; import only via `src/app/charts/Charts.tsx`.
 - `src/entries/login` → `dist/nuvora/public`; `src/entries/app` → `dist/nuvora/private`.
 
 ## Skins
@@ -15,8 +16,14 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 - Colours, fonts, row height: **only** in `src/ui/tokens.css` as semantic variables (`--text-3`, `--st-dl`, …). Never hard-code colours in components.
 - Layout differences live in `src/app/layouts/*Layout.tsx`; shared behaviour (filtering, sorting, selection, keyboard) must stay in shared components/hooks so all skins stay in sync.
 - New UI glyphs: add to `src/app/icons.ts` (Hugeicons Free, stroke rounded) and render with `<Icon>`. Never import `@hugeicons/core-free-icons` elsewhere.
-- File-type icons: `domain/fileKind.ts` decides the kind; `app/components/FileIcon.tsx` decides the picture. Swap icon packs there only.
+- File-type icons: `domain/fileKind.ts` decides the kind; `scripts/gen-file-icons.mjs` maps kinds to Material Icon Theme and generates `app/fileIcons.generated.ts`; `FileIcon.tsx` renders it. Re-run the script after changing kinds.
 - Fonts are self-hosted via @fontsource (no external requests; CSP forbids them).
+
+## Charts
+- Bklit UI components are vendored source (shadcn-style), styled with Tailwind v4 utilities. `src/ui/charts.css` loads Tailwind **theme + utilities only (no preflight)** and maps Bklit's `--chart-*` variables onto skin tokens — charts never get their own colours.
+- Chart code is lazy-loaded (`React.lazy`): keep `Charts.tsx` imports out of the main bundle.
+- Speed history is client-side only (`sync/history.ts`): it starts when the page opens. Never back-fill or invent samples.
+- Quirk: `LiveXAxis` `formatTime` receives **milliseconds** (its docs say seconds).
 
 ## qBittorrent constraints (verified in qBittorrent `webapplication.cpp`)
 - Anonymous requests get `public/`, authenticated get `private/` (fallback `public/`). No SPA fallback → hash routing for any future routes.
@@ -33,4 +40,4 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 - No fabricated data in production code; test fixtures stay in `*.test.ts`.
 - No silent failures; destructive actions need explicit confirmation (none exist yet).
 - No buttons for features that don't work yet.
-- Add a test for any change to `src/sync/` or `src/domain/`.
+- Add a test for any change to `src/sync/` or `src/domain/` (stats aggregations live in `domain/stats.ts`).

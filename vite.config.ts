@@ -1,4 +1,5 @@
 import { resolve } from 'node:path'
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -16,7 +17,7 @@ export default defineConfig(({ mode }) => {
     root: resolve(import.meta.dirname, `src/entries/${isLogin ? 'login' : 'app'}`),
     base: './',
     publicDir: resolve(import.meta.dirname, 'public-assets'),
-    plugins: [react()],
+    plugins: [react(), ...(isLogin ? [] : [tailwindcss()])],
     resolve: { alias: { '@': resolve(import.meta.dirname, 'src') } },
     build: {
       outDir: resolve(import.meta.dirname, `dist/nuvora/${isLogin ? 'public' : 'private'}`),

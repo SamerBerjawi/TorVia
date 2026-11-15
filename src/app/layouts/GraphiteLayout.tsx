@@ -3,6 +3,7 @@ import { GRAPHITE_COLUMNS } from '../columns'
 import { AppearanceMenu } from '../components/AppearanceMenu'
 import { BrandMark, SignOutButton } from '../components/Chrome'
 import { DetailsPanel } from '../components/DetailsPanel'
+import { RouteNav } from '../components/RouteNav'
 import { Icon } from '../components/Icon'
 import { SearchBox } from '../components/SearchBox'
 import { Sidebar as BaseSidebar } from '../components/Sidebar'
@@ -13,14 +14,15 @@ import { useUi } from '../uiStore'
 import type { LayoutProps } from './types'
 
 /** A · Graphite — sidebar, table, details on the right. Calm and dense. */
-export function GraphiteLayout({ view, narrow, version }: LayoutProps) {
+export function GraphiteLayout({ view, narrow, version, route, statistics }: LayoutProps) {
   const { data } = useEngine()
   const { focused, detailsOpen, openDetails, closeDetails, selected, clearSelection } = useUi()
   const detail = detailsOpen && focused ? data.torrents.get(focused) : undefined
   return (
     <div className="shell">
       <div className="shell__body">
-        <Sidebar view={view} version={version} />
+        <Sidebar view={view} version={version} route={route} />
+        {statistics ? <main className="main main--stats">{statistics}</main> : <>
         <main className="main">
           <div className="toolbar">
             <SearchBox placeholder="Filter — try cat:linux size:>1GB" hint="/" />
@@ -39,23 +41,28 @@ export function GraphiteLayout({ view, narrow, version }: LayoutProps) {
           <TorrentTable columns={GRAPHITE_COLUMNS} items={view.flatItems} order={view.order} rowHeight={narrow ? 52 : 44} label="Torrents" emptyText={view.total ? 'No torrents match these filters.' : 'No torrents yet.'} narrow={narrow} />
         </main>
         {detail && focused && <DetailsPanel hash={focused} torrent={detail} orientation="side" />}
+        </>}
       </div>
       <StatusBar>{version && <span className="statusbar__item statusbar__wide">qBittorrent {version}</span>}</StatusBar>
     </div>
   )
 }
 
-function Sidebar({ view, version }: Pick<LayoutProps, 'view' | 'version'>) {
+function Sidebar({ view, version, route }: Pick<LayoutProps, 'view' | 'version' | 'route'>) {
   return (
     <BaseSidebar
       view={view}
-      showStatus
+      showStatus={route === 'torrents'}
+      showFilters={route === 'torrents'}
       header={
-        <div className="sidebar__brand">
-          <BrandMark />
-          <span className="brandname">Nuvora</span>
-          {version && <span className="sidebar__version">qBittorrent {version}</span>}
-        </div>
+        <>
+          <div className="sidebar__brand">
+            <BrandMark />
+            <span className="brandname">Nuvora</span>
+            {version && <span className="sidebar__version">qBittorrent {version}</span>}
+          </div>
+          <RouteNav route={route} variant="list" />
+        </>
       }
       footer={
         <div className="sidebar__footer">
