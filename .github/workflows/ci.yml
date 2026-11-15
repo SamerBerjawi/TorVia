@@ -27,8 +27,8 @@ jobs:
       - run: pnpm check
       - uses: actions/upload-artifact@v4
         with:
-          name: nuvora-dist
-          path: dist/nuvora
+          name: torvia-dist
+          path: dist/torvia
           retention-days: 7
 
   e2e:
@@ -50,10 +50,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - uses: actions/download-artifact@v4
         with:
-          name: nuvora-dist
-          path: dist/nuvora
+          name: torvia-dist
+          path: dist/torvia
       - run: pnpm exec playwright install --with-deps chromium
       - run: bash e2e/run-qbt.sh ${{ matrix.qbt }}
       - run: pnpm e2e
       - if: failure()
-        run: docker logs nuvora-qbt || true
+        run: docker logs torvia-qbt || true

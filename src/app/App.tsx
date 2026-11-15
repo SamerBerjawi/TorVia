@@ -130,7 +130,7 @@ export function App() {
       {server.status === 'ready' && !server.caps.supported && (
         <div className="compatbar" role="alert">
           <Icon icon={AlertIcon} size={14} />
-          qBittorrent {server.appVersion} (WebAPI {server.apiVersion}) is older than Nuvora supports. Nuvora needs qBittorrent 5.0 or newer; some actions will fail.
+          qBittorrent {server.appVersion} (WebAPI {server.apiVersion}) is older than Torvia supports. Torvia needs qBittorrent 5.0 or newer; some actions will fail.
         </div>
       )}
       {skin === 'paper' ? <PaperLayout {...props} /> : skin === 'signal' ? <SignalLayout {...props} /> : <GraphiteLayout {...props} />}

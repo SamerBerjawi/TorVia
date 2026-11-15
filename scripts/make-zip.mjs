@@ -1,7 +1,8 @@
-// Creates dist/nuvora-<version>.zip containing the `nuvora/` folder (needs the `zip` CLI).
+// Creates dist/torvia-<version>.zip containing the `torvia/` folder (needs the `zip` CLI).
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, readFileSync, writeFileSync } from 'node:fs'
 const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-writeFileSync(new URL('../dist/nuvora/version.json', import.meta.url), JSON.stringify({ version }) + '\n')
-execFileSync('zip', ['-qr', `nuvora-${version}.zip`, 'nuvora'], { cwd: new URL('../dist', import.meta.url).pathname, stdio: 'inherit' })
-console.log(`dist/nuvora-${version}.zip`)
+writeFileSync(new URL('../dist/torvia/version.json', import.meta.url), JSON.stringify({ version }) + '\n')
+copyFileSync(new URL('../LICENSE', import.meta.url), new URL('../dist/torvia/LICENSE', import.meta.url))
+execFileSync('zip', ['-qr', `torvia-${version}.zip`, 'torvia'], { cwd: new URL('../dist', import.meta.url).pathname, stdio: 'inherit' })
+console.log(`dist/torvia-${version}.zip`)

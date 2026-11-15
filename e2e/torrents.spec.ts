@@ -16,7 +16,7 @@ test('add, organise, stop and remove a torrent end to end', async ({ page }) => 
   await setAppearance(page, 'graphite')
   await signIn(page)
   const stamp = Date.now()
-  const name = `nuvora-e2e-${stamp}.iso`
+  const name = `torvia-e2e-${stamp}.iso`
   const category = `e2e-cat-${stamp}`
 
   // Add via the dialog (keyboard shortcut N), stopped, with a tag.
@@ -88,7 +88,7 @@ test('details tabs load trackers, peers and files without errors', async ({ page
   const errors = trackErrors(page)
   await setAppearance(page, 'graphite')
   await signIn(page)
-  const name = `nuvora-e2e-tabs-${Date.now()}.iso`
+  const name = `torvia-e2e-tabs-${Date.now()}.iso`
   await page.keyboard.press('n')
   const add = page.getByRole('dialog', { name: 'Add torrents' })
   await add.getByLabel(/magnet links or urls/i).fill(fakeMagnet(name))

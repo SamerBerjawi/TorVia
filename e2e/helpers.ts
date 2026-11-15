@@ -1,12 +1,12 @@
 import { expect, type Page } from '@playwright/test'
 
-export const PASSWORD = 'nuvora-e2e-password' // matches e2e/qbt-config.mjs (test container only)
+export const PASSWORD = 'torvia-e2e-password' // matches e2e/qbt-config.mjs (test container only)
 
 export async function setAppearance(page: Page, skin: 'graphite' | 'paper' | 'signal', mode: 'light' | 'dark' = 'dark') {
-  await page.addInitScript(([s, m]) => localStorage.setItem('nuvora.appearance', JSON.stringify({ skin: s, mode: m })), [skin, mode] as const)
+  await page.addInitScript(([s, m]) => localStorage.setItem('torvia.appearance', JSON.stringify({ skin: s, mode: m })), [skin, mode] as const)
 }
 
-/** Signs in through Nuvora's own login page (served from public/ by qBittorrent). */
+/** Signs in through Torvia's own login page (served from public/ by qBittorrent). */
 export async function signIn(page: Page) {
   await page.goto('/')
   await page.getByLabel('Username').fill('admin')

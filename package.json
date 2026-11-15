@@ -1,6 +1,7 @@
 {
-  "name": "nuvora",
+  "name": "torvia",
   "version": "0.0.1",
+  "license": "MIT",
   "private": true,
   "description": "Next-generation alternative WebUI for qBittorrent",
   "type": "module",

@@ -27,7 +27,7 @@ export function SignalLayout({ view, narrow, version, route, statistics, ctx }: 
   return (
     <div className="shell">
       <header className="topbar">
-        <span className="wordmark">nuvora<span>.</span></span>
+        <span className="wordmark">torvia<span>.</span></span>
         <RouteNav route={route} variant="text" />
         <span className="topbar__spacer" />
         <div className="meters">

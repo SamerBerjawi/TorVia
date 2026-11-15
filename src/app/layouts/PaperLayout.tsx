@@ -25,7 +25,7 @@ export function PaperLayout({ view, narrow, version, route, statistics, ctx }: L
   return (
     <div className="shell">
       <header className="topbar">
-        <div className="topbar__brand"><BrandMark /><span className="brandname">Nuvora</span></div>
+        <div className="topbar__brand"><BrandMark /><span className="brandname">Torvia</span></div>
         <RouteNav route={route} variant="tabs" />
         <span className="topbar__spacer" />
         {!statistics && <SelectionBar ctx={ctx} variant="toolbar" />}

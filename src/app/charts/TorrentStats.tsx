@@ -46,7 +46,7 @@ export default function TorrentStats({ hash, torrent: t }: { hash: string; torre
       <section className="tstats__sec" aria-label="Transfer speed">
       <h3 className="tstats__h">Transfer speed</h3>
       {samples.length < 2 ? (
-        <p className="panel__empty">No transfer activity since Nuvora opened.</p>
+        <p className="panel__empty">No transfer activity since Torvia opened.</p>
       ) : (
         <>
           <LiveSpeed samples={samples} field="dl" color="var(--st-dl)" format={formatSpeed} window={180} height={110} ticks={2} />

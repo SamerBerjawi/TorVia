@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 
 /** Saved queries, per device. Will move to qBittorrent's `clientdata` store when available. */
-const KEY = 'nuvora.savedViews'
+const KEY = 'torvia.savedViews'
 const listeners = new Set<() => void>()
 
 function read(): string[] {

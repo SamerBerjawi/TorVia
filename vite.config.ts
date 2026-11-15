@@ -6,13 +6,13 @@ import { defineConfig } from 'vite'
 /**
  * qBittorrent serves `public/` to anonymous clients and `private/` to
  * authenticated ones, so we build two independent bundles (no shared chunks):
- *   --mode login -> dist/nuvora/public   (tiny sign-in page)
- *   --mode app   -> dist/nuvora/private  (the application)
+ *   --mode login -> dist/torvia/public   (tiny sign-in page)
+ *   --mode app   -> dist/torvia/private  (the application)
  * `base: './'` keeps every URL relative so sub-path reverse proxies work.
  */
 export default defineConfig(({ mode }) => {
   const isLogin = mode === 'login'
-  const qbt = process.env['NUVORA_QBT_URL'] ?? 'http://localhost:8080'
+  const qbt = process.env['TORVIA_QBT_URL'] ?? 'http://localhost:8080'
   return {
     root: resolve(import.meta.dirname, `src/entries/${isLogin ? 'login' : 'app'}`),
     base: './',
@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), ...(isLogin ? [] : [tailwindcss()])],
     resolve: { alias: { '@': resolve(import.meta.dirname, 'src') } },
     build: {
-      outDir: resolve(import.meta.dirname, `dist/nuvora/${isLogin ? 'public' : 'private'}`),
+      outDir: resolve(import.meta.dirname, `dist/torvia/${isLogin ? 'public' : 'private'}`),
       emptyOutDir: true,
       target: 'es2022',
       sourcemap: false,

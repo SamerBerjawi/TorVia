@@ -55,7 +55,7 @@ function Sidebar({ view, version, route }: Pick<LayoutProps, 'view' | 'version' 
         <>
           <div className="sidebar__brand">
             <BrandMark />
-            <span className="brandname">Nuvora</span>
+            <span className="brandname">Torvia</span>
             {version && <span className="sidebar__version">qBittorrent {version}</span>}
           </div>
           <div className="sidebar__add"><AddButton variant="full" /></div>

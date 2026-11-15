@@ -2,7 +2,7 @@
 import { lstatSync, readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
-const root = new URL('../dist/nuvora/', import.meta.url).pathname
+const root = new URL('../dist/torvia/', import.meta.url).pathname
 const MAX_FILE = 2 * 1024 * 1024 // qBittorrent hard limit is 10 MiB; we stay far below
 // qBittorrent rewrites these tokens in every text file it serves (webapplication.cpp translateDocument)
 const FORBIDDEN_TOKENS = ['${LANG}', '${CACHEID}', 'QBT_TR(']

@@ -13,7 +13,7 @@ export const MODE_LABEL: Record<Mode, string> = { system: 'System', light: 'Ligh
 
 export interface Appearance { skin: Skin; mode: Mode }
 
-const KEY = 'nuvora.appearance'
+const KEY = 'torvia.appearance'
 const DEFAULT: Appearance = { skin: 'graphite', mode: 'system' }
 
 function read(): Appearance {

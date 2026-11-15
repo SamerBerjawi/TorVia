@@ -1,4 +1,4 @@
-# CLAUDE.md — Nuvora
+# CLAUDE.md — Torvia
 
 Alternative WebUI for qBittorrent. Static build only; **no backend**. Verify with `pnpm check` before finishing any change.
 
@@ -9,7 +9,7 @@ Alternative WebUI for qBittorrent. Static build only; **no backend**. Verify wit
 - `src/ui/`     `theme.ts` (skin × mode, no React), `tokens.css` (all colours/fonts), `app.css`, `login.css`.
 - `src/app/`    React. `store.ts` (engine snapshot), `uiStore.ts` (zustand: filters, sort, selection, details), `useTorrentView.ts` (derived rows/groups/counts), `router.ts` (hash routes: `#/`, `#/statistics`), `columns.tsx` (per-skin column sets), `components/`, `layouts/` (one per skin), `charts/` (lazy-loaded: `Charts.tsx` wrappers, `StatisticsView`, `TorrentStats`).
 - `src/vendor/bklit/` Bklit UI charts (MIT), **generated** by `scripts/vendor-bklit.mjs` — never edit by hand; import only via `src/app/charts/Charts.tsx`.
-- `src/entries/login` → `dist/nuvora/public`; `src/entries/app` → `dist/nuvora/private`.
+- `src/entries/login` → `dist/torvia/public`; `src/entries/app` → `dist/torvia/private`.
 
 ## Skins
 Three skins — `graphite`, `paper`, `signal` — each with light and dark, selected via `<html data-skin data-mode>`.
@@ -28,7 +28,7 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 
 ## Testing
 - Unit: `pnpm test` (Vitest) — pure logic in api/, sync/, domain/.
-- E2E: `pnpm build && pnpm e2e:qbt [tag] && pnpm e2e` — Playwright against a **real** qbittorrent-nox container serving `dist/nuvora` as its alternative WebUI. CI runs 5.0, 5.1, 5.2 and latest. Never replace this with a mock; mocks hid a real login bug (5.x returns 204).
+- E2E: `pnpm build && pnpm e2e:qbt [tag] && pnpm e2e` — Playwright against a **real** qbittorrent-nox container serving `dist/torvia` as its alternative WebUI. CI runs 5.0, 5.1, 5.2 and latest. Never replace this with a mock; mocks hid a real login bug (5.x returns 204).
 
 ## Charts
 - Bklit UI components are vendored source (shadcn-style), styled with Tailwind v4 utilities. `src/ui/charts.css` loads Tailwind **theme + utilities only (no preflight)** and maps Bklit's `--chart-*` variables onto skin tokens — charts never get their own colours.
