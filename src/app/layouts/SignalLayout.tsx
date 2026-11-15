@@ -39,7 +39,7 @@ export function SignalLayout({ view, narrow, version, route, page, ctx }: Layout
         <AppearanceMenu compact />
         <SignOutButton />
       </header>
-      {page ? <main className="main main--stats">{page}</main> : <>
+      {page ? <main className="main main--stats" tabIndex={0} aria-label="Content">{page}</main> : <>
       <QueryBar view={view} />
       <div className="viewsrow">
         {saved.length > 0 && <Icon icon={SavedViewIcon} size={14} />}

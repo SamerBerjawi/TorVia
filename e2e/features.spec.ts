@@ -1,0 +1,113 @@
+import { expect, test } from '@playwright/test'
+import { setAppearance, signIn, trackErrors } from './helpers'
+
+test.describe.configure({ mode: 'serial' })
+
+test('logs: shows qBittorrent’s log, filters by level and text', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  await page.getByRole('link', { name: 'Logs' }).click()
+  const list = page.getByRole('list', { name: /Log entries/ })
+  await expect(list.getByRole('listitem').first()).toBeVisible({ timeout: 15_000 })
+  const total = await list.getByRole('listitem').count()
+  await page.getByLabel('Search log').fill('zzz-no-such-text-zzz')
+  await expect(page.getByText('No entries match.')).toBeVisible()
+  await page.getByLabel('Search log').fill('')
+  await page.getByRole('group', { name: 'Show levels' }).getByLabel('Normal').uncheck()
+  await page.getByRole('group', { name: 'Show levels' }).getByLabel('Info').uncheck()
+  await page.getByRole('group', { name: 'Show levels' }).getByLabel('Warning').uncheck()
+  await page.getByRole('group', { name: 'Show levels' }).getByLabel('Critical').uncheck()
+  await expect(list.getByRole('listitem')).toHaveCount(0)
+  await page.getByRole('group', { name: 'Show levels' }).getByLabel('Normal').check()
+  await page.getByRole('group', { name: 'Show levels' }).getByLabel('Info').check()
+  await page.getByRole('group', { name: 'Show levels' }).getByLabel('Warning').check()
+  await page.getByRole('group', { name: 'Show levels' }).getByLabel('Critical').check()
+  expect(await list.getByRole('listitem').count()).toBeGreaterThanOrEqual(total)
+  expect(errors).toEqual([])
+})
+
+test('rss: add and remove a feed, create edit and delete a rule', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  await page.getByRole('link', { name: 'RSS' }).click()
+  const id = Date.now()
+  // Feed (the URL is unreachable on purpose: adding must still work, fetching just fails quietly).
+  await page.getByLabel('Feed URL').fill(`http://torvia-e2e-${id}.invalid/feed.xml`)
+  await page.getByRole('button', { name: 'Add feed' }).click()
+  const feed = page.getByRole('list', { name: 'Feeds' }).getByRole('button', { name: new RegExp(`torvia-e2e-${id}`) })
+  await expect(feed).toBeVisible({ timeout: 10_000 })
+  await feed.click()
+  await page.getByRole('button', { name: /^Remove$/ }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Remove feed' }).click()
+  await expect(feed).toHaveCount(0, { timeout: 10_000 })
+  // Rule
+  await page.getByRole('tab', { name: 'Download rules' }).click()
+  const rule = `e2e-rule-${id}`
+  await page.getByLabel('New rule name').fill(rule)
+  await page.getByRole('button', { name: 'Add rule' }).click()
+  await page.getByLabel(`${rule}: must contain`).fill('1080p')
+  await page.getByRole('button', { name: 'Save rule' }).click()
+  await expect(page.getByText(`Saved ${rule}`)).toBeVisible()
+  await expect(page.getByText('matches “1080p”')).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: `Delete rule ${rule}` }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete rule' }).click()
+  await expect(page.getByLabel(`Enable rule ${rule}`)).toHaveCount(0, { timeout: 10_000 })
+  expect(errors).toEqual([])
+})
+
+test('search: explains missing plugins instead of failing', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  await page.getByRole('link', { name: 'Search' }).click()
+  // The test container has no Python/plugins: either the explanation or a usable form is correct, never a blank page.
+  await expect(page.getByText(/No search plugins are enabled|Search for torrents|Could not load/).first()).toBeVisible({ timeout: 10_000 })
+  expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
+})
+
+test('create torrent: builds a task for a server-side path, or says it is unsupported', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  await page.getByRole('link', { name: 'Create' }).click()
+  await expect(page.getByRole('heading', { name: 'Create torrent', level: 1 })).toBeVisible()
+  const unsupported = page.getByText(/no torrent creator|not found/i)
+  const path = page.getByLabel('Source path on the server')
+  await expect(path.or(unsupported)).toBeVisible({ timeout: 10_000 })
+  if (await path.isVisible()) {
+    await path.fill('relative/path')
+    await expect(page.getByText(/absolute path/)).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Create torrent' })).toBeDisabled()
+    await path.fill('/config/qBittorrent/config/qBittorrent.conf')
+    await page.getByLabel(/Trackers/).fill('udp://tracker.invalid:6969/announce')
+    await page.getByRole('button', { name: 'Create torrent' }).click()
+    await expect(page.getByText('Torrent creation started')).toBeVisible()
+    const task = page.locator('.create__tasks li').filter({ hasText: 'qBittorrent.conf' }).first()
+    await expect(task).toContainText(/Finished|Failed|Running|Queued/, { timeout: 15_000 })
+    await task.getByRole('button', { name: /Remove task/ }).click()
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Remove task' }).click()
+  }
+  expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
+})
+
+test('app is installable: manifest and icons are served to signed-out clients', async ({ request }) => {
+  const m = await request.get('/manifest.webmanifest')
+  expect(m.ok()).toBe(true)
+  const json = await m.json()
+  expect(json.name).toBe('Torvia')
+  for (const icon of json.icons as { src: string }[]) expect((await request.get(`/${icon.src}`)).ok(), icon.src).toBe(true)
+})
+
+test('notification preference persists', async ({ page }) => {
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  await page.getByRole('link', { name: 'Settings' }).click()
+  const select = page.getByLabel(/When a download finishes/)
+  await expect(select).toHaveValue('off')
+  await select.selectOption('toast')
+  await page.reload()
+  await expect(page.getByLabel(/When a download finishes/)).toHaveValue('toast')
+  await page.getByLabel(/When a download finishes/).selectOption('off')
+})

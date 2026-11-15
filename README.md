@@ -50,6 +50,9 @@ pnpm e2e                                              # Playwright end-to-end te
 pnpm build && pnpm package                            # dist/torvia-<version>.zip
 ```
 
+## Also included
+Search (qBittorrent search plugins), RSS feeds and auto-download rules, torrent creator, execution log, statistics charts, settings, category/tag management, column chooser with density and saved layouts, global speed limits, opt-in download notifications, and an installable web-app manifest. Design decisions: `docs/adr/`. Accessibility: `docs/accessibility.md`.
+
 ## How packaging works
 qBittorrent serves `public/` to signed-out clients and `private/` to signed-in ones (falling back to `public/`). So the build
 produces two independent bundles: a tiny sign-in page and the app. See `CLAUDE.md` for the constraints this imposes.

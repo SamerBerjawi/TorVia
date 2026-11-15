@@ -80,7 +80,8 @@
 .tcell--status, .tcell--progress { font-family: var(--font-ui); }
 .tcell--end { text-align: right; justify-self: end; }
 .thcell.tcell--end { justify-self: end; }
-.tempty { height: 100%; display: grid; place-content: center; justify-items: center; gap: 8px; color: var(--text-4); }
+.tempty { height: 100%; display: grid; place-content: center; color: var(--text-4); }
+.tempty > [role='gridcell'] { display: grid; justify-items: center; gap: 8px; }
 .tempty p { margin: 0; color: var(--text-3); }
 .tgroup { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: flex-end; gap: 12px; padding: 0 16px 7px; border-bottom: 1px solid var(--border); }
 .tgroup__label { font: 600 14px var(--font-display); color: var(--text); }
@@ -517,7 +518,7 @@
 .settings__section h2 { margin: 12px 0 4px; font: 600 12px var(--font-ui); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-4); }
 .settings__note { margin: 4px 0 8px; font-size: 12px; color: var(--text-4); }
 .setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.setting[data-disabled] { opacity: .5; }
+.setting[data-disabled] :is(input, select) { opacity: .5; }
 .setting__label { display: flex; flex-direction: column; gap: 2px; color: var(--text); font-size: 13px; }
 .setting__help { font-size: 12px; color: var(--text-4); }
 .setting__control { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; max-width: 55%; }
@@ -577,3 +578,64 @@
 .layoutsave { display: flex; gap: 6px; }
 .layoutsave input { flex: 1; min-width: 0; height: 28px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--input); color: var(--text); font: 13px var(--font-ui); }
 .layoutsave .btn { height: 28px; }
+
+/* Stacked (behind) toasts are aria-hidden by Base UI: take their controls out of the focus order too. */
+.toast:not([data-expanded]) .toast__content[data-behind] .iconbtn { visibility: hidden; }
+
+/* logs */
+.logs { max-width: 1100px; margin: 0 auto; padding: 0 20px; height: 100%; display: flex; flex-direction: column; }
+.logs__bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 6px 0 10px; }
+.logs__levels { display: flex; gap: 14px; margin: 0; padding: 0; border: 0; flex: 1; }
+.logs__levels label, .logs__follow { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+.logs input[type='checkbox'] { accent-color: var(--accent); }
+.logs__list { flex: 1; min-height: 0; overflow: auto; margin: 0 0 16px; padding: 0; list-style: none; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); font: 12px/1.5 var(--font-num); }
+.logs__list li { display: grid; grid-template-columns: 82px 64px 1fr; gap: 10px; padding: 3px 10px; border-bottom: 1px solid var(--row-border); }
+.logs__list time { color: var(--text-4); }
+.logs__lvl { color: var(--text-3); text-transform: uppercase; font-size: 11px; }
+.logs__msg { color: var(--text-2); overflow-wrap: anywhere; }
+.logs__list li[data-level='critical'] .logs__lvl, .logs__list li[data-level='critical'] .logs__msg { color: var(--st-err); }
+.logs__list li[data-level='warning'] .logs__lvl, .logs__list li[data-level='warning'] .logs__msg { color: var(--st-stall); }
+
+/* rss */
+.rss { max-width: 1200px; margin: 0 auto; padding: 0 20px 20px; height: 100%; display: flex; flex-direction: column; }
+.tabs--inline { border: 0; padding: 0; }
+.rss__body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.rss__split { flex: 1; min-height: 0; display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 20px; }
+.rss__tree, .rss__articles { min-height: 0; overflow: auto; }
+.rss__add { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.rss__add input, .rss__editor input:not([type='checkbox']), .rss__editor select { flex: 1 1 140px; min-width: 0; height: 30px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--input); color: var(--text); font: 13px var(--font-ui); }
+.rss__add input[aria-invalid='true'] { border-color: var(--st-err); }
+.rss__list { list-style: none; margin: 8px 0; padding: 0; }
+.rss__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.rss__spacer { flex: 1; }
+.rss__articlelist, .rss__rulelist { list-style: none; margin: 0; padding: 0; }
+.rss__articlelist li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.rss__articlelist li[data-read] .rss__title { color: var(--text-3); font-weight: 400; }
+.rss__title { font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
+.rss__row-actions { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 6px; align-items: center; }
+.rss__rulelist li { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.rss__rulehead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rss__editor { display: grid; gap: 10px; padding: 12px 0 4px 26px; max-width: 560px; }
+.rss__feedpick { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--r-md); }
+.rss__feedpick label { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 800px) { .rss__split { grid-template-columns: 1fr; } }
+
+/* search */
+.search { max-width: 1200px; margin: 0 auto; padding: 0 20px 20px; height: 100%; display: flex; flex-direction: column; }
+.search__form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.search__form input { flex: 1 1 240px; }
+.search__form :is(input, select), .search__bar input { height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--input); color: var(--text); font: 13px var(--font-ui); }
+.search__bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 0 10px; color: var(--text-3); }
+.search__num { width: 64px; }
+.search__results { flex: 1; min-height: 0; overflow: auto; }
+.thsort { all: unset; cursor: pointer; }
+.thsort:focus-visible { outline: 2px solid var(--focus); }
+
+/* torrent creator */
+.create { max-width: 760px; margin: 0 auto; padding: 0 20px 24px; }
+.create__form { display: grid; gap: 12px; }
+.create textarea, .create input:not([type='checkbox']), .create select { width: 100%; padding: 6px 8px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--input); color: var(--text); font: 13px var(--font-ui); }
+.create [aria-invalid='true'] { border-color: var(--st-err); }
+.create__tasks { list-style: none; margin: 0; padding: 0; }
+.create__tasks li { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.create__path { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; color: var(--text); }

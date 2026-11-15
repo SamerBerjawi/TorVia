@@ -21,3 +21,11 @@ export function validateTagInput(input: string, existing: Iterable<string>): str
   const dupes = names.filter((t) => have.has(t.toLowerCase()))
   return dupes.length > 0 ? `Already exists: ${dupes.join(', ')}` : null
 }
+
+/** Rule names must be non-empty and unique (case-insensitive). */
+export function validateRuleName(name: string, existing: Iterable<string>): string | null {
+  const n = name.trim()
+  if (n === '') return 'Enter a name'
+  for (const e of existing) if (e.toLowerCase() === n.toLowerCase()) return 'A rule with that name already exists'
+  return null
+}

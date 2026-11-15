@@ -7,7 +7,7 @@ Alternative WebUI for qBittorrent. Static build only; **no backend**. Verify wit
 - `src/sync/`   `sync/maindata` engine: `reconcile.ts` (pure reducer: torrents, categories, tags, server state), `connection.ts` (pure state machine), `history.ts` (speed samples), `engine.ts` (side effects). No React.
 - `src/domain/` pure logic: `files.ts` (file tree), `filters.ts` (status views), `query.ts` (query language), `sort.ts`, `fileKind.ts` (extension → file kind), `format.ts`, `status.ts`. No React.
 - `src/ui/`     `theme.ts` (skin × mode, no React), `tokens.css` (all colours/fonts), `app.css`, `login.css`.
-- `src/app/`    React. `store.ts` (engine snapshot), `uiStore.ts` (zustand: filters, sort, selection, details), `useTorrentView.ts` (derived rows/groups/counts), `router.ts` (hash routes: `#/`, `#/statistics`, `#/settings`), `columns.tsx` (per-skin column sets), `components/`, `layouts/` (one per skin), `charts/` (lazy-loaded: `Charts.tsx` wrappers, `StatisticsView`, `TorrentStats`).
+- `src/app/`    React. `store.ts` (engine snapshot), `uiStore.ts` (zustand: filters, sort, selection, details), `useTorrentView.ts` (derived rows/groups/counts), `router.ts` (hash routes, see `ROUTES`: torrents, search, rss, create, logs, statistics, settings), `columns.tsx` (per-skin column sets), `components/`, `layouts/` (one per skin), `charts/` (lazy-loaded: `Charts.tsx` wrappers, `StatisticsView`, `TorrentStats`).
 - `src/vendor/bklit/` Bklit UI charts (MIT), **generated** by `scripts/vendor-bklit.mjs` — never edit by hand; import only via `src/app/charts/Charts.tsx`.
 - `src/entries/login` → `dist/torvia/public`; `src/entries/app` → `dist/torvia/private`.
 
@@ -65,3 +65,9 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 ## Global speed limits
 - `dialogs/GlobalSpeedDialog.tsx` edits the normal and alternative limits via `app/setPreferences` (bytes/s; `domain/rate.ts` handles KiB/s ↔ MiB/s). The status bar button shows the limits in force from sync (`server_state.dl_rate_limit/up_rate_limit`); it is hidden on phones but reachable from the command palette.
 - Density (`compact | comfortable | spacious`) shifts each skin's base row height (`domain/layouts.ts` `DENSITY_DELTA`); phones keep tap-sized rows. Saved layouts = columns + sort + density, per skin, validated on load (`parseLayouts`). Stores: `app/tablePrefs.ts`. UI: the "Table options" popover (`ColumnChooser.tsx`).
+
+## Feature views (lazy-loaded pages in the layouts' `page` slot)
+- `app/logs` (log/main, incremental `last_known_id`), `app/rss` (feeds, articles, auto-download rules), `app/search` (search plugins; needs Python on the server), `app/creator` (torrentcreator; server-side source path). Pure logic is in `domain/{logs,rss,search,creator}.ts` with tests; API wrappers in `api/`.
+- Endpoints that may not exist on older qBittorrent (torrent creator) are probed by calling them: a 404 shows an explanation, never a broken page.
+- Notifications: `app/notifications.ts` (opt-in, Settings). PWA: manifest + icons in `public-assets/` (regenerate PNGs with `scripts/gen-icons.mjs`); deliberately **no service worker** (ADR 0012).
+- Decisions live in `docs/adr/`; accessibility gates and the manual checklist in `docs/accessibility.md`. Run the axe audit with `pnpm e2e e2e/a11y.spec.ts` (set `A11Y_REPORT=path.tsv` to collect everything).

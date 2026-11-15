@@ -40,6 +40,7 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@iconify-json/material-icon-theme": "^1.2.77",
     "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "^4.3.5",

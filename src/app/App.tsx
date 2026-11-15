@@ -13,11 +13,16 @@ import { GraphiteLayout } from './layouts/GraphiteLayout'
 import { PaperLayout } from './layouts/PaperLayout'
 import { SignalLayout } from './layouts/SignalLayout'
 import { useRoute } from './router'
+import { useCompletionNotifications } from './notifications'
 import { engine, useEngine } from './store'
 import { useTorrentView } from './useTorrentView'
 
 const StatisticsView = lazy(() => import('./charts/StatisticsView'))
 const SettingsView = lazy(() => import('./settings/SettingsView'))
+const LogsView = lazy(() => import('./logs/LogsView'))
+const RssView = lazy(() => import('./rss/RssView'))
+const SearchView = lazy(() => import('./search/SearchView'))
+const CreatorView = lazy(() => import('./creator/CreatorView'))
 
 const isTyping = (el: Element | null) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable)
 
@@ -27,6 +32,7 @@ export function App() {
     return () => engine.stop()
   }, [])
 
+  useCompletionNotifications()
   const { connection } = useEngine()
   const { skin } = useAppearance()
   const narrow = useMediaQuery('(max-width: 800px)')
@@ -119,16 +125,15 @@ export function App() {
   }
   if (connection.kind === 'connecting') return <div className="fullscreen" role="status">Connecting to qBittorrent…</div>
 
-  const page =
-    route === 'statistics' ? (
-      <Suspense fallback={<div className="fullscreen">Loading statistics…</div>}>
-        <StatisticsView />
-      </Suspense>
-    ) : route === 'settings' ? (
-      <Suspense fallback={<div className="fullscreen">Loading settings…</div>}>
-        <SettingsView />
-      </Suspense>
-    ) : null
+  const PAGES: Partial<Record<typeof route, React.LazyExoticComponent<() => React.JSX.Element>>> = {
+    statistics: StatisticsView, settings: SettingsView, logs: LogsView, rss: RssView, search: SearchView, create: CreatorView,
+  }
+  const Page = PAGES[route]
+  const page = Page ? (
+    <Suspense fallback={<div className="fullscreen" role="status">Loading…</div>}>
+      <Page />
+    </Suspense>
+  ) : null
   const props = { view, narrow, version, route, page, ctx }
   return (
     <>

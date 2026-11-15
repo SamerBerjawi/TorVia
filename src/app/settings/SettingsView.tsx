@@ -6,6 +6,7 @@ import { MODE_LABEL, MODES, SKIN_LABEL, SKINS, setAppearance } from '@/ui/theme'
 import { run } from '../actions/run'
 import { useAppearance } from '../hooks'
 import { LibrarySection } from './LibrarySection'
+import { setNotifyMode, systemNotificationsAvailable, useNotifyMode, type NotifyMode } from '../notifications'
 
 type Load = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; prefs: Preferences }
 
@@ -53,15 +54,29 @@ function FieldRow({ field, value, disabled, error, onChange }: { field: Field; v
 
 function AppearanceSection() {
   const a = useAppearance()
+  const notify = useNotifyMode()
   return (
     <section className="settings__section" aria-labelledby="sec-appearance" data-section="appearance">
-      <h2 id="sec-appearance">Torvia appearance</h2>
+      <h2 id="sec-appearance">Torvia (this browser)</h2>
       <p className="settings__note">Saved in this browser only.</p>
       <div className="setting">
         <label className="setting__label" htmlFor="set-skin">Skin</label>
         <div className="setting__control">
           <select id="set-skin" value={a.skin} onChange={(e) => setAppearance({ skin: e.target.value as typeof a.skin })}>
             {SKINS.map((s) => <option key={s} value={s}>{SKIN_LABEL[s]}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="setting">
+        <label className="setting__label" htmlFor="set-notify">
+          When a download finishes
+          <span className="setting__help">{systemNotificationsAvailable() ? 'System notifications need your browser’s permission.' : 'System notifications need HTTPS or localhost, so only in-page messages are available here.'}</span>
+        </label>
+        <div className="setting__control">
+          <select id="set-notify" value={notify} onChange={(e) => void setNotifyMode(e.target.value as NotifyMode)}>
+            <option value="off">Do nothing</option>
+            <option value="toast">Show a message in Torvia</option>
+            {systemNotificationsAvailable() && <option value="system">Send a system notification</option>}
           </select>
         </div>
       </div>

@@ -24,7 +24,7 @@ export function GraphiteLayout({ view, narrow, version, route, page, ctx }: Layo
     <div className="shell">
       <div className="shell__body">
         <Sidebar view={view} version={version} route={route} />
-        {page ? <main className="main main--stats">{page}</main> : <>
+        {page ? <main className="main main--stats" tabIndex={0} aria-label="Content">{page}</main> : <>
         <main className="main">
           <div className="toolbar">
             <SearchBox placeholder="Filter — try cat:linux size:>1GB" hint="/" />

@@ -48,7 +48,7 @@ export function PaperLayout({ view, narrow, version, route, page, ctx }: LayoutP
         </div>
       )}
       <div className="shell__body">
-        {page ? <main className="main main--stats">{page}</main> : <>
+        {page ? <main className="main main--stats" tabIndex={0} aria-label="Content">{page}</main> : <>
         <Sidebar view={view} showStatus={false} />
         <main className="main">
           <ConnectionBanner />

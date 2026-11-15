@@ -170,11 +170,15 @@ export function TorrentTable({ columns: allColumns, items, order, rowHeight: bas
   }
 
   return (
-    <div className="ttable" data-density={narrow ? undefined : density} role="grid" aria-label={label} aria-rowcount={order.length + 1} aria-multiselectable="true">
+    <div className="ttable" data-density={narrow ? undefined : density}>
       <TorrentContextMenu ctx={ctx}>
       <div
         ref={scroller}
         className="tscroll"
+        role="grid"
+        aria-label={label}
+        aria-rowcount={order.length + 1}
+        aria-multiselectable="true"
         tabIndex={0}
         aria-activedescendant={focused && indexOfHash.has(focused) ? `row-${focused}` : undefined}
         onKeyDown={onKeyDown}
@@ -201,7 +205,7 @@ export function TorrentTable({ columns: allColumns, items, order, rowHeight: bas
           </div>
         </div>
         {items.length === 0 ? (
-          <div className="tempty"><Icon icon={EmptyIcon} size={28} /><p>{emptyText}</p></div>
+          <div role="row" className="tempty"><div role="gridcell"><Icon icon={EmptyIcon} size={28} /><p>{emptyText}</p></div></div>
         ) : (
           <div style={{ height: virt.getTotalSize(), position: 'relative', minWidth }}>
             {virt.getVirtualItems().map((v) => {

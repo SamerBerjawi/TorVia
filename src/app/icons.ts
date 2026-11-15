@@ -3,6 +3,11 @@
  * Import icons from here, never from the package directly, so swaps and audits happen in one place.
  */
 export {
+  Notebook01Icon as LogsIcon,
+  RssIcon,
+  Refresh01Icon as RefreshIcon,
+  File01Icon as CreateTorrentIcon,
+  Notification01Icon as NotificationIcon,
   LayoutThreeColumnIcon as ColumnsIcon,
   Settings01Icon as SettingsIcon,
   Add01Icon as AddIcon,

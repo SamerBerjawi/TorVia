@@ -1,10 +1,14 @@
 import { hrefFor, type Route } from '../router'
-import { SettingsIcon, StatisticsIcon, TorrentsIcon } from '../icons'
+import { CreateTorrentIcon, LogsIcon, RssIcon, SearchIcon, SettingsIcon, StatisticsIcon, TorrentsIcon } from '../icons'
 import { Icon } from './Icon'
 
 const ITEMS: { route: Route; label: string; icon: typeof TorrentsIcon }[] = [
   { route: 'torrents', label: 'Torrents', icon: TorrentsIcon },
+  { route: 'search', label: 'Search', icon: SearchIcon },
+  { route: 'rss', label: 'RSS', icon: RssIcon },
+  { route: 'create', label: 'Create', icon: CreateTorrentIcon },
   { route: 'statistics', label: 'Statistics', icon: StatisticsIcon },
+  { route: 'logs', label: 'Logs', icon: LogsIcon },
   { route: 'settings', label: 'Settings', icon: SettingsIcon },
 ]
 

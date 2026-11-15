@@ -112,6 +112,11 @@ export const ACTIONS: readonly Action[] = [
           onConfirm: () => run(() => transferApi.pauseSession(), { success: 'Session paused', failure: 'Could not pause session' }).then(() => undefined) }) },
   { id: 'go-torrents', group: 'global', icon: I.TorrentsIcon, needsSelection: false, label: () => 'Go to Torrents', run: () => { location.hash = hrefFor('torrents') } },
   { id: 'go-statistics', group: 'global', icon: I.StatisticsIcon, needsSelection: false, label: () => 'Go to Statistics', run: () => { location.hash = hrefFor('statistics') } },
+  { id: 'go-search', group: 'global', icon: I.SearchIcon, needsSelection: false, label: () => 'Go to Search', run: () => { location.hash = hrefFor('search') } },
+  { id: 'go-rss', group: 'global', icon: I.RssIcon, needsSelection: false, label: () => 'Go to RSS', run: () => { location.hash = hrefFor('rss') } },
+  { id: 'go-create', group: 'global', icon: I.CreateTorrentIcon, needsSelection: false, label: () => 'Go to Create torrent', run: () => { location.hash = hrefFor('create') } },
+  { id: 'go-logs', group: 'global', icon: I.LogsIcon, needsSelection: false, label: () => 'Go to Logs', run: () => { location.hash = hrefFor('logs') } },
+  { id: 'go-settings', group: 'global', icon: I.SettingsIcon, needsSelection: false, label: () => 'Go to Settings', run: () => { location.hash = hrefFor('settings') } },
   { id: 'shortcuts', group: 'global', icon: I.KeyboardIcon, shortcut: '?', needsSelection: false, label: () => 'Keyboard shortcuts', run: () => openDialog({ kind: 'shortcuts' }) },
 ]
 

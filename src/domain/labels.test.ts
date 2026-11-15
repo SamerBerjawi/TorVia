@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseTagNames, validateCategoryName, validateTagInput } from './labels'
+import { parseTagNames, validateCategoryName, validateRuleName, validateTagInput } from './labels'
 
 describe('labels', () => {
   it('validates category names', () => {
@@ -16,5 +16,10 @@ describe('labels', () => {
     expect(validateTagInput(' , ', [])).toBe('Enter at least one tag')
     expect(validateTagInput('x, Linux', ['linux'])).toBe('Already exists: Linux')
     expect(validateTagInput('x', ['linux'])).toBeNull()
+  })
+  it('validates rule names', () => {
+    expect(validateRuleName(' ', [])).toBe('Enter a name')
+    expect(validateRuleName('Linux', ['linux'])).toBe('A rule with that name already exists')
+    expect(validateRuleName('Linux', ['other'])).toBeNull()
   })
 })
