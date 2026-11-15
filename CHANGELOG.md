@@ -4,6 +4,14 @@ All notable changes to Torvia are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+### Added
+- **Update notice:** a dismissible banner when a newer Torvia release exists, plus *Settings → About* with the version, a "Check now" button and an on/off switch. It asks GitHub's public releases page once a day, anonymously; this is Torvia's only request outside qBittorrent. On by default, see `docs/adr/0014-update-check.md`.
+- **Paper:** the details panel can be resized by dragging the handle above it (or with the arrow keys; double-click resets). The height is remembered.
+
+### Fixed
+- **Installed app / notched phones:** content no longer runs under the status bar, notch or home indicator (safe-area insets).
+- **Files tab:** very long file and folder names are cut off with an ellipsis (full name in the tooltip) instead of wrapping one character per line; on narrow screens the table scrolls sideways. Right-to-left names display correctly.
+
 ## [0.1.0] - 2026-11-15
 
 First public preview. A complete alternative WebUI for qBittorrent 5.0 or newer: static files only, served by qBittorrent itself, installed by extracting a folder and pointing qBittorrent at it.

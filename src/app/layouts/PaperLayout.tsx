@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { STATUS_FILTER_LABEL, type StatusFilter } from '@/domain/filters'
 import { PAPER_COLUMNS } from '../columns'
 import { SelectionBar } from '../actions/SelectionBar'
@@ -9,8 +10,10 @@ import { RouteNav } from '../components/RouteNav'
 import { Icon } from '../components/Icon'
 import { SearchBox } from '../components/SearchBox'
 import { Sidebar, STATUS_ICON } from '../components/Sidebar'
+import { Splitter } from '../components/Splitter'
 import { ConnectionBanner, StatusBar } from '../components/StatusBar'
 import { TorrentTable } from '../components/TorrentTable'
+import { usePaneHeight } from '../tablePrefs'
 import { useEngine } from '../store'
 import { useUi } from '../uiStore'
 import type { LayoutProps } from './types'
@@ -22,6 +25,8 @@ export function PaperLayout({ view, narrow, version, route, page, ctx }: LayoutP
   const { data } = useEngine()
   const { status, setStatus, focused, detailsOpen } = useUi()
   const detail = detailsOpen && focused ? data.torrents.get(focused) : undefined
+  const mainRef = useRef<HTMLElement>(null)
+  const [paneHeight, setPaneHeight] = usePaneHeight()
   return (
     <div className="shell">
       <header className="topbar">
@@ -50,10 +55,15 @@ export function PaperLayout({ view, narrow, version, route, page, ctx }: LayoutP
       <div className="shell__body">
         {page ? <main className="main main--stats" tabIndex={0} aria-label="Content">{page}</main> : <>
         <Sidebar view={view} showStatus={false} />
-        <main className="main">
+        <main className="main" ref={mainRef}>
           <ConnectionBanner />
           <TorrentTable columns={PAPER_COLUMNS} items={view.flatItems} order={view.order} rowHeight={narrow ? 52 : 40} label="Torrents" emptyText={view.total ? 'No torrents match these filters.' : 'No torrents yet.'} narrow={narrow} ctx={ctx} />
-          {detail && focused && <DetailsPanel hash={focused} torrent={detail} orientation="bottom" />}
+          {detail && focused && (
+            <>
+              {!narrow && <Splitter height={paneHeight} onChange={setPaneHeight} container={mainRef} />}
+              <DetailsPanel hash={focused} torrent={detail} orientation="bottom" height={narrow ? undefined : paneHeight} />
+            </>
+          )}
         </main>
         </>}
       </div>

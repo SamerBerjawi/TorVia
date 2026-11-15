@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
@@ -10,12 +11,15 @@ import { defineConfig } from 'vite'
  *   --mode app   -> dist/torvia/private  (the application)
  * `base: './'` keeps every URL relative so sub-path reverse proxies work.
  */
+const { version } = JSON.parse(readFileSync(resolve(import.meta.dirname, 'package.json'), 'utf8')) as { version: string }
+
 export default defineConfig(({ mode }) => {
   const isLogin = mode === 'login'
   const qbt = process.env['TORVIA_QBT_URL'] ?? 'http://localhost:8080'
   return {
     root: resolve(import.meta.dirname, `src/entries/${isLogin ? 'login' : 'app'}`),
     base: './',
+    define: { __TORVIA_VERSION__: JSON.stringify(version) },
     publicDir: resolve(import.meta.dirname, 'public-assets'),
     plugins: [react(), ...(isLogin ? [] : [tailwindcss()])],
     resolve: { alias: { '@': resolve(import.meta.dirname, 'src') } },
@@ -31,6 +35,6 @@ export default defineConfig(({ mode }) => {
       // rewritten so qBittorrent's CSRF check accepts the request.
       proxy: { '/api': { target: qbt, changeOrigin: true, headers: { Origin: qbt, Referer: `${qbt}/` } } },
     },
-    test: { root: import.meta.dirname, include: ['src/**/*.test.ts'], environment: 'node' },
+    test: { root: import.meta.dirname, include: ['src/**/*.test.ts'], environment: 'node', globals: false },
   }
 })

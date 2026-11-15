@@ -40,16 +40,16 @@ const TorrentStats = lazy(() => import('../charts/TorrentStats'))
 const date = (s: number) => (s > 0 ? new Date(s * 1000).toLocaleString() : '—')
 
 /** Overview of one torrent from sync data. Files/Trackers/Peers tabs come with their endpoints. */
-export function DetailsPanel({ hash, torrent, orientation }: { hash: string; torrent: Torrent; orientation: 'side' | 'bottom' }) {
+export function DetailsPanel({ hash, torrent, orientation, height }: { hash: string; torrent: Torrent; orientation: 'side' | 'bottom'; height?: number | undefined }) {
   const close = useUi((s) => s.closeDetails)
   const [tab, setTab] = useState<'overview' | 'files' | 'trackers' | 'peers' | 'statistics'>('overview')
   const s = toStatus(torrent.state)
   return (
-    <aside className={`details details--${orientation}`} aria-label="Torrent details" style={statusStyle(torrent.state)}>
+    <aside className={`details details--${orientation}`} aria-label="Torrent details" style={{ ...statusStyle(torrent.state), ...(height ? { flexBasis: height } : null) }}>
       <header className="details__head">
         <div className="details__titlerow">
           <FileIcon name={torrent.name} size={18} />
-          <h2 className="details__title">{torrent.name}</h2>
+          <h2 className="details__title"><bdi>{torrent.name}</bdi></h2>
           <button type="button" className="iconbtn" aria-label="Close details" onClick={close}><Icon icon={CloseIcon} /></button>
         </div>
         <div className="details__status"><i aria-hidden="true" />{STATUS_LABEL[s]} · {formatPercent(torrent.progress)}</div>

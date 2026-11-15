@@ -1,0 +1,7 @@
+# 0014 — Update notice via GitHub, on by default, easy to turn off
+
+**Context.** Torvia is installed by copying files, so nothing tells users a newer release exists. qBittorrent itself can't announce it. Until now Torvia made no request outside qBittorrent, and the CSP (`connect-src 'self'`) enforced that.
+
+**Decision.** The app asks GitHub's public releases endpoint (`api.github.com/repos/<owner>/torvia/releases/latest`) at most once a day and shows a dismissible banner when the latest non-draft, non-pre-release version is newer than the running one (`domain/version.ts`, `app/updates.ts`). The request is anonymous (`credentials: omit`, `referrerPolicy: no-referrer`, no identifiers), the response is validated before use (version shape, `https://github.com` link only), and failures are shown in Settings, never as errors. It is **on by default**, because an opt-in notice would almost never be seen, and can be switched off in *Settings → About*. The CSP of the app page gains exactly one origin: `connect-src 'self' https://api.github.com`. The sign-in page is unchanged.
+
+**Consequences.** GitHub sees the user's IP address once a day, as for any request; this is disclosed next to the switch and in the README. It is the only outside request Torvia makes. Updating is still manual (extract and swap the folder); the banner links to the release notes and steps. E2E stubs this one request (never qBittorrent). If the default should change, it is the `enabled: true` default in `app/updates.ts`.

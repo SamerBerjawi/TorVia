@@ -13,7 +13,9 @@ import { GraphiteLayout } from './layouts/GraphiteLayout'
 import { PaperLayout } from './layouts/PaperLayout'
 import { SignalLayout } from './layouts/SignalLayout'
 import { useRoute } from './router'
+import { UpdateBanner } from './components/UpdateBanner'
 import { useCompletionNotifications } from './notifications'
+import { checkForUpdates } from './updates'
 import { engine, useEngine } from './store'
 import { useTorrentView } from './useTorrentView'
 
@@ -33,6 +35,7 @@ export function App() {
   }, [])
 
   useCompletionNotifications()
+  useEffect(() => { void checkForUpdates() }, [])
   const { connection } = useEngine()
   const { skin } = useAppearance()
   const narrow = useMediaQuery('(max-width: 800px)')
@@ -143,6 +146,7 @@ export function App() {
           qBittorrent {server.appVersion} (WebAPI {server.apiVersion}) is older than Torvia supports. Torvia needs qBittorrent 5.0 or newer; some actions will fail.
         </div>
       )}
+      <UpdateBanner />
       {skin === 'paper' ? <PaperLayout {...props} /> : skin === 'signal' ? <SignalLayout {...props} /> : <GraphiteLayout {...props} />}
       <DialogHost ctx={ctx} />
       <Toaster />

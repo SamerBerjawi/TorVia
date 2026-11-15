@@ -62,6 +62,8 @@ WebUI\RootFolder=/config/torvia
 - **Back to the stock WebUI:** untick **Use alternative WebUI** (or remove `WebUI\AlternativeUIEnabled` from `qBittorrent.conf`).
 - **Verify a download:** compare with `SHA256SUMS.txt` from the release page.
 
+Torvia tells you when a new version is out: a banner appears once per release (Settings → About has a switch to turn it off). This check is the only request Torvia makes outside qBittorrent: an anonymous call to GitHub's public releases page, at most once a day.
+
 Every release archive is installed into a fresh qBittorrent and checked by CI before it is published (`e2e/smoke-release.sh`).
 
 ## Features

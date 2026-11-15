@@ -99,6 +99,10 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
+/* Installed as an app (or on a notched phone) the page runs edge to edge: keep content out of the status bar,
+   notch, rounded corners and home indicator. env() is 0 where there is nothing to avoid. */
+#root { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+@media (display-mode: standalone) { #root { padding-top: calc(env(safe-area-inset-top) + 6px); } }
 body {
   margin: 0;
   background: var(--bg, #111214);

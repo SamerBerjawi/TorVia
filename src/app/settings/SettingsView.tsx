@@ -5,6 +5,7 @@ import { diffPrefs, fromDisplay, isActive, SECTIONS, toDisplay, validateField, v
 import { run } from '../actions/run'
 import { AppearancePicker } from '../components/AppearancePicker'
 import { LibrarySection } from './LibrarySection'
+import { CURRENT_VERSION, availableUpdate, checkForUpdates, setUpdateChecks, useUpdates } from '../updates'
 import { setNotifyMode, systemNotificationsAvailable, useNotifyMode, type NotifyMode } from '../notifications'
 
 type Load = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; prefs: Preferences }
@@ -75,6 +76,33 @@ function AppearanceSection() {
   )
 }
 
+function AboutSection() {
+  const u = useUpdates()
+  const update = availableUpdate(u)
+  const status = !u.enabled ? 'Update checks are off.'
+    : u.checking ? 'Checking…'
+    : u.error ? `Couldn’t check: ${u.error}. Will retry next time Torvia opens.`
+    : update ? `Torvia ${update.version} is available.`
+    : u.checkedAt ? `Up to date. Last checked ${new Date(u.checkedAt).toLocaleString()}.`
+    : 'Not checked yet.'
+  return (
+    <section className="settings__section" aria-labelledby="sec-about" data-section="about">
+      <h2 id="sec-about">About Torvia</h2>
+      <div className="setting">
+        <div className="setting__label">Version {CURRENT_VERSION}<span className="setting__help" role="status">{status}{update && <> <a href={update.url} target="_blank" rel="noopener noreferrer">What’s new and how to update</a></>}</span></div>
+        <div className="setting__control"><button type="button" className="btn" disabled={!u.enabled || u.checking} onClick={() => void checkForUpdates(true)}>Check now</button></div>
+      </div>
+      <div className="setting">
+        <label className="setting__label" htmlFor="set-updates">
+          Tell me when a new version is released
+          <span className="setting__help">Torvia asks GitHub’s public releases page once a day. Nothing else leaves your network: no account, cookies, referrer or tracking. Your IP address is visible to GitHub as for any request.</span>
+        </label>
+        <div className="setting__control"><input id="set-updates" type="checkbox" role="switch" className="switch" checked={u.enabled} onChange={(e) => setUpdateChecks(e.target.checked)} /></div>
+      </div>
+    </section>
+  )
+}
+
 /** qBittorrent preferences, driven by domain/settingsSchema.ts. Only keys the server reports are shown. */
 export default function SettingsView() {
   const [load, setLoad] = useState<Load>({ status: 'loading' })
@@ -134,7 +162,7 @@ export default function SettingsView() {
         <input type="search" className="settings__search" placeholder="Search settings" aria-label="Search settings" value={query} onChange={(e) => setQuery(e.target.value)} />
       </header>
       <nav className="settings__nav" aria-label="Settings sections">
-        {[...(query.trim() === '' ? [{ id: 'appearance', label: 'Appearance' }] : []), ...SECTIONS.filter((s) => fields.some((f) => f.section === s.id)), ...(query.trim() === '' ? [{ id: 'library', label: 'Categories & tags' }] : [])].map((s) => <a key={s.id} href={`#/settings/${s.id}`} onClick={(e) => { e.preventDefault(); document.getElementById(`sec-${s.id}`)?.scrollIntoView({ block: 'start' }) }}>{s.label}</a>)}
+        {[...(query.trim() === '' ? [{ id: 'appearance', label: 'Appearance' }] : []), ...SECTIONS.filter((s) => fields.some((f) => f.section === s.id)), ...(query.trim() === '' ? [{ id: 'library', label: 'Categories & tags' }, { id: 'about', label: 'About' }] : [])].map((s) => <a key={s.id} href={`#/settings/${s.id}`} onClick={(e) => { e.preventDefault(); document.getElementById(`sec-${s.id}`)?.scrollIntoView({ block: 'start' }) }}>{s.label}</a>)}
       </nav>
       <div className="settings__body">
         {query.trim() === '' && <AppearanceSection />}
@@ -151,6 +179,7 @@ export default function SettingsView() {
           )
         })}
         {query.trim() === '' && <LibrarySection />}
+        {query.trim() === '' && <AboutSection />}
         {fields.length === 0 && <p className="panel__empty">No settings match “{query}”.</p>}
         <p className="settings__note">Web UI port, credentials and certificates are not editable here, so a typo can’t lock you out. Change them in qBittorrent itself.</p>
       </div>

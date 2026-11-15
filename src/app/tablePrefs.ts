@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { PANE_DEFAULT, parseStoredHeight } from '@/domain/pane'
 import { DENSITIES, parseLayouts, removeLayout, upsertLayout, type Density, type Layout } from '@/domain/layouts'
 
 /** Row density and saved table layouts: device-local, kept in localStorage (failures keep the session value). */
@@ -40,3 +41,8 @@ export const setDensity = (d: Density) => density.set(d)
 export const useLayouts = () => useSyncExternalStore(layouts.subscribe, layouts.get)
 export const saveLayout = (l: Layout) => layouts.set(upsertLayout(layouts.get(), l))
 export const deleteLayout = (skin: string, name: string) => layouts.set(removeLayout(layouts.get(), skin, name))
+
+/** Height of Paper's details panel (px), remembered per browser. */
+const PANE_KEY = 'torvia.paneHeight'
+const pane = makeStore<number>(PANE_KEY, (() => { try { return parseStoredHeight(localStorage.getItem(PANE_KEY)) } catch { return PANE_DEFAULT } })())
+export const usePaneHeight = (): [number, (h: number) => void] => [useSyncExternalStore(pane.subscribe, pane.get), pane.set]

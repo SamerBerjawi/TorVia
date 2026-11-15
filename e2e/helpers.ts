@@ -3,6 +3,9 @@ import { expect, type Page } from '@playwright/test'
 export const PASSWORD = 'torvia-e2e-password' // matches e2e/qbt-config.mjs (test container only)
 
 export async function setAppearance(page: Page, skin: 'graphite' | 'paper' | 'signal', mode: 'light' | 'dark' = 'dark') {
+  // The update check is the only request Torvia makes outside qBittorrent. By default tests see "up to date" (a context-level
+  // route, so a test's own page.route() takes priority); keeps runs offline-safe and free of unrelated console errors.
+  await page.context().route('https://api.github.com/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ tag_name: 'v0.0.1', html_url: 'https://github.com/SamerBerjawi/torvia/releases/tag/v0.0.1', draft: false, prerelease: false }) }))
   await page.addInitScript(([s, m]) => localStorage.setItem('torvia.appearance', JSON.stringify({ skin: s, mode: m })), [skin, mode] as const)
 }
 

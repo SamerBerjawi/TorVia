@@ -17,3 +17,4 @@ Short records of decisions that are costly to reverse. Format: context, decision
 | [0011](0011-i18n-deferred.md) | Internationalisation deferred |
 | [0012](0012-pwa-without-service-worker.md) | Installable, but no service worker |
 | [0013](0013-completion-notifications.md) | Opt-in completion notifications |
+| [0014](0014-update-check.md) | Update notice via GitHub, on by default, easy to turn off |

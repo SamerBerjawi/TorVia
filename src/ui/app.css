@@ -1,7 +1,8 @@
 /* Layout + components for all skins. Skin differences are token-driven, plus a few [data-skin] rules. */
 
 /* ── Shell ─────────────────────────────────────────────── */
-.shell { height: 100%; display: flex; flex-direction: column; background: var(--bg); }
+#root { display: flex; flex-direction: column; } /* banners (compat, update) sit above the layout without pushing it off-screen */
+.shell { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg); }
 .shell__body { flex: 1; min-height: 0; display: flex; }
 .main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--surface); }
 .fullscreen { height: 100%; display: grid; place-content: center; justify-items: center; gap: 12px; color: var(--text-3); background: var(--bg); }
@@ -498,8 +499,9 @@
 .select--sm { height: 26px; font-size: 12px; }
 .select--sm { padding: 0 6px; border: 1px solid var(--border-strong, var(--border)); border-radius: var(--r-md); background: var(--surface); color: var(--text); }
 .ftree__name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ftree__name > :is(button, svg, .file-icon) { flex: none; }
 .ftree__spacer { width: 24px; flex: none; }
-.ftree__label { overflow-wrap: anywhere; }
+.ftree__label { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ftree__rename { margin-left: auto; opacity: 0; }
 .dtable tr:hover .ftree__rename, .ftree__rename:focus-visible { opacity: 1; }
 .ftree__edit { flex: 1; min-width: 0; padding: 3px 6px; border: 1px solid var(--accent); border-radius: var(--r-md); background: var(--input); color: var(--text); font: 12px var(--font-ui); }
@@ -657,3 +659,26 @@
 .routenav--tabs a:not([aria-current='page']) .routenav__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (min-width: 1500px) { .routenav--tabs a:not([aria-current='page']) .routenav__label { position: static; width: auto; height: auto; overflow: visible; clip: auto; } }
 [data-skin='paper'] .btn--icon-label .btn__label { display: none; }
+
+/* Files table: fixed layout so the name column takes what is left and long names truncate (full name in the tooltip)
+   instead of wrapping one character per line; the panel scrolls sideways when it is narrower than the table. */
+.dtable--files { table-layout: fixed; min-width: 540px; }
+.dtable--files .c-size { width: 88px; }
+.dtable--files .c-progress { width: 132px; }
+.dtable--files .c-prio { width: 116px; }
+.dtable--files td, .dtable--files th { overflow: hidden; }
+.dtable--files .dtable__name { max-width: none; }
+.ftree__rename { margin-left: 0; }
+
+/* resizable details pane (Paper) */
+.splitter { position: relative; flex: none; height: 9px; margin: -4px 0; z-index: 3; cursor: row-resize; touch-action: none; }
+.splitter::after { content: ''; position: absolute; left: 0; right: 0; top: 4px; height: 1px; background: var(--border-strong); transition: background .15s, height .15s, top .15s; }
+.splitter:hover::after, .splitter:focus-visible::after { top: 3px; height: 3px; background: var(--accent); }
+.splitter:focus-visible { outline: none; }
+
+.banner--update { background: color-mix(in oklab, var(--accent) 14%, var(--surface)); flex: none; }
+.banner--update svg { color: var(--accent-text); }
+.banner--update a { color: var(--accent-text); font-weight: 500; }
+.banner__spacer { flex: 1; }
+.compatbar { flex: none; }
+@media (max-width: 640px) { .dtable--files { min-width: 660px; } .dtable--files .c-size { width: 80px; } .dtable--files .c-progress { width: 110px; } .dtable--files .c-prio { width: 104px; } }

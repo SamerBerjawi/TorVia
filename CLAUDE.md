@@ -75,3 +75,6 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 ## Changelog and screenshots
 - Every release needs a `## [x.y.z]` section in `CHANGELOG.md` (Keep a Changelog). `scripts/release-notes.mjs` turns it into the GitHub release notes and fails without it; a unit test checks the current `package.json` version has an entry. Add user-visible changes under `## [Unreleased]` as you go.
 - README screenshots live in `docs/screenshots/` and come from `bash scripts/screenshots/run.sh` (real qBittorrent in Docker, sample torrents built by `make-sample-data.mjs` with real hashes). Never hand-edit or use mock data; re-run it after visible UI changes.
+
+## Update check
+- `app/updates.ts` + `domain/version.ts`: the only request outside qBittorrent (anonymous GitHub releases API, daily, user can disable). The app page CSP allows exactly `https://api.github.com` for it. The running version comes from `package.json` via Vite `define` (`__TORVIA_VERSION__`). E2E stubs only this request (default in `e2e/helpers.ts` `setAppearance`).

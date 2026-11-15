@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { setAppearance, signIn, trackErrors } from './helpers'
+import { fakeMagnet, fakeTorrentFile, setAppearance, signIn, trackErrors } from './helpers'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -134,4 +134,125 @@ test('style and mode can be chosen from the sign-in page, Settings and the Appea
   await page.getByRole('button', { name: 'Appearance' }).click()
   await page.getByRole('dialog', { name: 'Appearance' }).getByLabel(/^Graphite/).click()
   await expect(html).toHaveAttribute('data-skin', 'graphite')
+})
+
+const LONG = `برنامج توب شيف جميع المواسم ${'Top.Chef.Season.One.Episode.Name.With.A.Very.Long.Release.Group.Tag.'.repeat(2)}[WEB-DL][720p-1080p-2160p]`
+
+test('files tab: very long names truncate instead of wrapping one character per line', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await signIn(page)
+  const root = `torvia-long-${Date.now()}`
+  await page.keyboard.press('n')
+  const add = page.getByRole('dialog', { name: 'Add torrents' })
+  await add.locator('input[type=file]').setInputFiles(fakeTorrentFile(root, { [`${LONG}.mkv`]: 3000, 'short.txt': 100 }))
+  await add.getByLabel('Start torrent').uncheck()
+  await add.getByRole('button', { name: /add stopped/i }).click()
+  const row = page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: root })
+  await expect(row).toBeVisible({ timeout: 15_000 })
+  await row.click()
+  await page.getByRole('button', { name: 'Show details' }).click()
+  const details = page.getByRole('complementary', { name: 'Torrent details' })
+  await details.getByRole('tab', { name: 'Files' }).click()
+  const label = details.locator('.ftree__label', { hasText: 'Top.Chef.Season' })
+  await expect(label).toBeVisible()
+  const box = await label.evaluate((el) => ({ h: el.getBoundingClientRect().height, truncated: el.scrollWidth > el.clientWidth }))
+  expect(box.h, 'one line, not a tall column of characters').toBeLessThan(30)
+  expect(box.truncated).toBe(true)
+  await expect(label).toHaveAttribute('title', new RegExp(root))
+  await row.click(); await page.keyboard.press('Delete')
+  await page.getByRole('alertdialog').getByRole('button', { name: /^remove/i }).click()
+  expect(errors).toEqual([])
+})
+
+test('paper: the details panel can be resized by dragging or keyboard, and remembers its size', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'paper', 'light')
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await signIn(page)
+  const name = `a-resize-${Date.now()}.iso`
+  await page.keyboard.press('n')
+  const add = page.getByRole('dialog', { name: 'Add torrents' })
+  await add.getByLabel(/magnet links or urls/i).fill(fakeMagnet(name))
+  await add.getByLabel('Start torrent').uncheck()
+  await add.getByRole('button', { name: /add stopped/i }).click()
+  const row = page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: name })
+  await expect(row).toBeVisible({ timeout: 15_000 })
+  await row.click(); await page.keyboard.press('Enter')
+  const details = page.getByRole('complementary', { name: 'Torrent details' })
+  const sep = page.getByRole('separator', { name: 'Resize details panel' })
+  await expect(details).toBeVisible()
+  const heightOf = async () => Math.round((await details.boundingBox())!.height)
+  const start = await heightOf()
+  // Keyboard: Up grows the panel by 24px.
+  await sep.focus(); await page.keyboard.press('ArrowUp')
+  await expect.poll(heightOf).toBe(start + 24)
+  // Pointer drag upwards grows it further.
+  const b = (await sep.boundingBox())!
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down()
+  await page.mouse.move(b.x + b.width / 2, b.y - 120, { steps: 6 }); await page.mouse.up()
+  await expect.poll(heightOf).toBeGreaterThan(start + 100)
+  const resized = await heightOf()
+  // Remembered across reloads; double-click resets.
+  await page.reload()
+  await page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: name }).click(); await page.keyboard.press('Enter')
+  await expect.poll(heightOf).toBe(resized)
+  await page.getByRole('separator', { name: 'Resize details panel' }).dblclick()
+  await expect.poll(heightOf).toBe(300)
+  await page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: name }).click(); await page.keyboard.press('Delete')
+  await page.getByRole('alertdialog').getByRole('button', { name: /^remove/i }).click()
+  expect(errors).toEqual([])
+})
+
+const release = (tag: string) => ({ tag_name: tag, html_url: `https://github.com/SamerBerjawi/torvia/releases/tag/${tag}`, draft: false, prerelease: false })
+const stubGitHub = async (page: import('@playwright/test').Page, body: unknown, counter: { n: number }) =>
+  page.route('https://api.github.com/**', (route) => { counter.n++; return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) }) })
+
+test('update notice: appears for a newer release, can be dismissed, and checks can be switched off', async ({ page }) => {
+  const errors = trackErrors(page)
+  const calls = { n: 0 }
+  await stubGitHub(page, release('v99.0.0'), calls) // GitHub is the only thing stubbed; qBittorrent stays real
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  const banner = page.getByRole('status').filter({ hasText: 'Torvia 99.0.0 is available' })
+  await expect(banner).toBeVisible({ timeout: 10_000 })
+  await expect(banner.getByRole('link')).toHaveAttribute('href', /github\.com\/SamerBerjawi\/torvia\/releases\/tag\/v99\.0\.0/)
+  await expect(page.getByRole('grid', { name: 'Torrents' })).toBeVisible() // banner doesn't push the layout off-screen
+  expect(await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 1)).toBe(true)
+  await banner.getByRole('button', { name: 'Dismiss update notice' }).click()
+  await expect(banner).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('grid', { name: 'Torrents' }).waitFor()
+  await expect(page.getByText('Torvia 99.0.0 is available')).toHaveCount(0) // dismissed for that version
+  // Checked once, then cached for a day.
+  expect(calls.n).toBe(1)
+  // Settings: manual check, then turning checks off stops requests and hides notices.
+  await page.getByRole('link', { name: 'Settings' }).click()
+  const about = page.locator('[data-section="about"]')
+  await expect(about).toContainText('Version 0.')
+  await about.getByRole('button', { name: 'Check now' }).click()
+  await expect(about).toContainText('Torvia 99.0.0 is available')
+  expect(calls.n).toBe(2)
+  await about.getByRole('switch', { name: /Tell me when a new version/ }).uncheck()
+  await expect(about).toContainText('Update checks are off')
+  await expect(about.getByRole('button', { name: 'Check now' })).toBeDisabled()
+  expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
+})
+
+test('update notice: stays quiet when up to date and when GitHub is unreachable', async ({ page }) => {
+  const calls = { n: 0 }
+  await stubGitHub(page, release('v0.0.1'), calls)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  await page.getByRole('link', { name: 'Settings' }).click()
+  const about = page.locator('[data-section="about"]')
+  await about.getByRole('button', { name: 'Check now' }).click()
+  await expect(about).toContainText('Up to date')
+  await expect(page.getByText(/is available/)).toHaveCount(0)
+  await page.unroute('https://api.github.com/**')
+  await page.route('https://api.github.com/**', (r) => r.abort('failed'))
+  await about.getByRole('button', { name: 'Check now' }).click()
+  await expect(about).toContainText('Couldn’t check')
+  await expect(page.getByText(/is available/)).toHaveCount(0)
 })

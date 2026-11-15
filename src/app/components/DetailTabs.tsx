@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { detailsApi, type FilePriority } from '@/api/details'
 import { buildFileTree, nodeProgress, visibleNodes, type FileNode } from '@/domain/files'
 import { formatBytes, formatPercent, formatSpeed } from '@/domain/format'
-import { ChevronDownIcon, ChevronRightIcon } from '../icons'
+import { ChevronDownIcon, ChevronRightIcon, RenameIcon } from '../icons'
 import { Icon } from './Icon'
 import { run } from '../actions/run'
 import { useDetailData, type Loaded } from '../useDetailData'
@@ -56,7 +56,7 @@ function NameCell({ node, hash, collapsed, toggle, onChanged }: { node: FileNode
     void run(() => call(hash, node.path, newPath), { success: `Renamed to ${name}`, failure: 'Could not rename' }).then(onChanged)
   }
   return (
-    <div className="ftree__name" style={{ paddingLeft: node.depth * 16 }}>
+    <div className="ftree__name" style={{ paddingLeft: node.depth * 12 }}>
       {node.kind === 'folder' ? (
         <button type="button" className="iconbtn iconbtn--sm" aria-expanded={!collapsed} aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${node.name}`} onClick={toggle}>
           <Icon icon={collapsed ? ChevronRightIcon : ChevronDownIcon} size={14} />
@@ -75,8 +75,8 @@ function NameCell({ node, hash, collapsed, toggle, onChanged }: { node: FileNode
         />
       ) : (
         <>
-          <span className="ftree__label" title={node.path}>{node.name}</span>
-          <button type="button" className="linkbtn ftree__rename" aria-label={`Rename ${node.name}`} onClick={() => { setDraft(node.name); setEditing(true) }}>Rename</button>
+          <span className="ftree__label" title={node.path}><bdi>{node.name}</bdi></span>
+          <button type="button" className="iconbtn iconbtn--sm ftree__rename" aria-label={`Rename ${node.name}`} title="Rename" onClick={() => { setDraft(node.name); setEditing(true) }}><Icon icon={RenameIcon} size={13} /></button>
         </>
       )}
     </div>
@@ -93,7 +93,8 @@ export function FilesTab({ hash }: { hash: string }) {
       {(files) => {
         const rows = visibleNodes(buildFileTree(files), collapsed)
         return (
-          <table className="dtable">
+          <table className="dtable dtable--files">
+            <colgroup><col /><col className="c-size" /><col className="c-progress" /><col className="c-prio" /></colgroup>
             <thead><tr><th>Name</th><th>Size</th><th>Progress</th><th>Priority</th></tr></thead>
             <tbody>
               {rows.map((n) => (
