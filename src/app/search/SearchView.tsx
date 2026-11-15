@@ -3,8 +3,10 @@ import { searchApi, type SearchPlugin, type SearchResult } from '@/api/search'
 import { ApiError } from '@/api/transport'
 import { formatBytes } from '@/domain/format'
 import { commonCategories, displayCount, displaySize, filterResults, sortResults, type ResultSort, type SearchSort } from '@/domain/search'
+import { isSameSize, parseSearchHash } from '@/domain/similar'
 import { notifyError } from '../feedback/toast'
 import { openDialog } from '../dialogs/dialogStore'
+import { useHash } from '../router'
 
 type Phase = { kind: 'idle' } | { kind: 'running' | 'done'; id: number }
 
@@ -21,6 +23,8 @@ export default function SearchView() {
   const [minSeeds, setMinSeeds] = useState(0)
   const [sort, setSort] = useState<ResultSort>({ key: 'seeders', dir: 'desc' })
   const current = useRef<number | null>(null)
+  const hash = useHash()
+  const [wanted, setWanted] = useState<number | null>(null) // size (bytes) we hope to match, from "Search for similar"
 
   useEffect(() => {
     const ctl = new AbortController()
@@ -57,12 +61,13 @@ export default function SearchView() {
   const categories = useMemo(() => commonCategories(chosen), [chosen])
   const shown = useMemo(() => sortResults(filterResults(results, text, minSeeds), sort), [results, text, minSeeds, sort])
 
-  const start = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!pattern.trim()) return
+  const begin = async (text: string, category0 = category, which0 = which) => {
+    const q = text.trim()
+    if (!q) return
     if (current.current !== null) { const old = current.current; void searchApi.stop(old).then(() => searchApi.remove(old)).catch(() => undefined) }
     try {
-      const id = await searchApi.start(pattern.trim(), categories.some((c) => c.id === category) ? category : 'all', which === 'enabled' ? 'enabled' : which === 'all' ? 'all' : which)
+      const cats = commonCategories(which0 === 'enabled' || which0 === 'all' ? enabled : enabled.filter((p) => p.name === which0))
+      const id = await searchApi.start(q, cats.some((c) => c.id === category0) ? category0 : 'all', which0)
       current.current = id
       setResults([])
       setPhase({ kind: 'running', id })
@@ -70,6 +75,18 @@ export default function SearchView() {
       notifyError('Could not start the search', err)
     }
   }
+  const start = (e: React.FormEvent) => { e.preventDefault(); setWanted(null); void begin(pattern) }
+
+  // Arriving from "Search for similar torrents" / "Search for this file": prefill, remember the size, run once.
+  useEffect(() => {
+    const req = parseSearchHash(hash)
+    if (!req || !plugins) return
+    history.replaceState(null, '', '#/search') // consume the request so a reload or back/forward doesn't repeat it
+    setPattern(req.query); setWanted(req.size); setText(''); setMinSeeds(0)
+    if (enabled.length > 0) void begin(req.query, 'all', 'enabled')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hash, plugins])
+
   const sortBy = (key: SearchSort) => setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: key === 'name' ? 'asc' : 'desc' }))
   const aria = (key: SearchSort) => (sort.key === key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined)
 
@@ -85,7 +102,7 @@ export default function SearchView() {
         </p>
       ) : (
         <>
-          <form className="searchpage__form" onSubmit={(e) => void start(e)}>
+          <form className="searchpage__form" onSubmit={start}>
             <input type="search" aria-label="Search for torrents" placeholder="Search for torrents" value={pattern} onChange={(e) => setPattern(e.target.value)} />
             <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -98,6 +115,7 @@ export default function SearchView() {
               ? <button type="button" className="btn" onClick={() => void searchApi.stop(phase.id).finally(() => setPhase({ kind: 'done', id: phase.id }))}>Stop</button>
               : <button type="submit" className="btn btn--accent" disabled={!pattern.trim()}>Search</button>}
           </form>
+          {wanted !== null && <p className="searchpage__wanted">Looking for something exactly <strong>{formatBytes(wanted)}</strong> ({wanted.toLocaleString()} bytes). Results that size are marked, and a match is a strong sign the content is identical.</p>}
           {phase.kind !== 'idle' && (
             <div className="searchpage__bar" role="status">
               {phase.kind === 'running' ? 'Searching…' : 'Finished.'} {results.length} results{shown.length !== results.length ? `, ${shown.length} shown` : ''}
@@ -121,7 +139,7 @@ export default function SearchView() {
                 <tbody>
                   {shown.slice(0, 500).map((r, i) => (
                     <tr key={`${r.fileUrl}:${i}`}>
-                      <td className="dtable__name"><span title={r.fileName}>{r.fileName}</span></td>
+                      <td className="dtable__name"><span title={r.fileName}>{r.fileName}</span>{isSameSize(r.fileSize, wanted) && <span className="searchpage__badge">Same size</span>}</td>
                       <td className="num">{displaySize(r.fileSize, formatBytes)}</td>
                       <td className="num">{displayCount(r.nbSeeders)}</td>
                       <td className="num">{displayCount(r.nbLeechers)}</td>

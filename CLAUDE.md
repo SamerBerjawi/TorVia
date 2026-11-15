@@ -84,3 +84,6 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 
 ## Resizable details panel
 - `components/Splitter.tsx` (pointer + keyboard, `role=separator`) with sizing rules in `domain/pane.ts`: Paper resizes the height of the bottom panel, Graphite and Signal the width of the side panel (vertical splitter; each layout passes its own reserve so the table keeps room). Sizes persist in `app/tablePrefs.ts`. The splitter is hidden on narrow screens, where details open full-screen.
+
+## Find similar torrents / files
+- `domain/similar.ts` cleans names into search queries and builds/parses `#/search?q=…&size=…` (pure, tested). The action (`search-similar`) and the Files-tab button only show when `app/searchAvailability.ts` says search works (enabled plugin). `SearchView` consumes the hash once (prefill, auto-run, "Same size" marks). E2E stubs only the search endpoints (a test qBittorrent has no Python/plugins).

@@ -19,3 +19,6 @@ const subscribe = (l: () => void) => {
 
 export const useRoute = (): Route => useSyncExternalStore(subscribe, parse)
 export const hrefFor = (r: Route): string => (r === 'torrents' ? '#/' : `#/${r}`)
+
+/** The raw location hash, reactive (used by pages that read parameters from it, e.g. `#/search?q=…`). */
+export const useHash = (): string => useSyncExternalStore(subscribe, () => location.hash)

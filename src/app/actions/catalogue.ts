@@ -7,6 +7,7 @@ import { copyText } from '../clipboard'
 import { openDialog } from '../dialogs/dialogStore'
 import { notify } from '../feedback/toast'
 import * as I from '../icons'
+import { searchQueryFromName, searchHash } from '@/domain/similar'
 import { hrefFor } from '../router'
 import { useUi } from '../uiStore'
 import { run, torrentsLabel } from './run'
@@ -18,6 +19,8 @@ export interface ActionContext {
   facts: SelectionFacts
   caps: Capabilities
   server: Partial<ServerState>
+  /** qBittorrent search is usable (Python + an enabled plugin). */
+  searchAvailable: boolean
 }
 
 export type ActionGroup = 'state' | 'organize' | 'queue' | 'transfer' | 'copy' | 'danger' | 'global'
@@ -90,6 +93,10 @@ export const ACTIONS: readonly Action[] = [
     run: (c) => run(() => torrentsApi.setAutoManagement(c.hashes, !c.facts.allAutoTMM), { success: 'Automatic management updated', failure: 'Could not change automatic management' }) },
 
   // ── Copy ──────────────────────────────────────────────
+  { id: 'search-similar', group: 'organize', icon: I.SearchIcon, needsSelection: true, visible: (c) => c.searchAvailable && one(c),
+    label: () => 'Search for similar torrents',
+    run: (c) => { const t = c.torrents[0]; if (t) location.hash = searchHash(searchQueryFromName(t.name), t.size) } },
+
   { id: 'copy-name', group: 'copy', icon: I.CopyIcon, needsSelection: true, label: (c) => (one(c) ? 'Copy name' : 'Copy names'), run: (c) => copy('name', c.torrents.map((t) => t.name).join('\n')) },
   { id: 'copy-hash', group: 'copy', icon: I.CopyIcon, needsSelection: true, label: (c) => (one(c) ? 'Copy info hash' : 'Copy info hashes'), run: (c) => copy('info hash', c.hashes.join('\n')) },
   { id: 'copy-magnet', group: 'copy', icon: I.TorrentFileIcon, needsSelection: true, label: (c) => (one(c) ? 'Copy magnet link' : 'Copy magnet links'),

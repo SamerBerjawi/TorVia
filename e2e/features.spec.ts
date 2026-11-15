@@ -374,3 +374,81 @@ for (const skin of ['graphite', 'paper', 'signal'] as const) {
     if (skin !== 'signal') await bar.getByRole('link', { name: `Torvia ${version}` }).click().then(() => expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible())
   })
 }
+
+const SIM_ROOT = 'Sample.Show.2020.1080p.WEB-DL.x264-GRP'
+const addSimTorrent = async (page: import('@playwright/test').Page) => {
+  await page.keyboard.press('n')
+  const add = page.getByRole('dialog', { name: 'Add torrents' })
+  await add.locator('input[type=file]').setInputFiles(fakeTorrentFile(SIM_ROOT, { 'Sample.Show.S01E01.1080p.WEB-DL.x264-GRP.mkv': 3000, [`extras/notes-${Date.now()}.txt`]: 100 }))
+  await add.getByLabel('Start torrent').uncheck()
+  await add.getByRole('button', { name: /add stopped/i }).click()
+  const row = page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: SIM_ROOT })
+  await expect(row).toBeVisible({ timeout: 15_000 })
+  return row
+}
+const removeRow = async (page: import('@playwright/test').Page, row: import('@playwright/test').Locator) => {
+  await page.goto('/#/'); await row.click(); await page.keyboard.press('Delete')
+  await page.getByRole('alertdialog').getByRole('button', { name: /^remove/i }).click()
+}
+
+test('find similar: without search plugins the buttons are hidden and the Search page explains why', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page) // real qBittorrent test container: no Python, no plugins
+  const row = await addSimTorrent(page)
+  await row.click({ button: 'right' })
+  await expect(page.getByRole('menu')).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Search for similar torrents' })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await row.click(); await page.getByRole('button', { name: 'Show details' }).click()
+  await page.getByRole('complementary', { name: 'Torrent details' }).getByRole('tab', { name: 'Files' }).click()
+  await expect(page.getByRole('link', { name: /^Search for / })).toHaveCount(0)
+  await page.goto('/#/search?q=anything&size=123')
+  await expect(page.getByText(/No search plugins are enabled/)).toBeVisible({ timeout: 10_000 })
+  await removeRow(page, row)
+  expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
+})
+
+test('find similar: search for a torrent or an incomplete file, with exact-size matches marked (search endpoints stubbed)', async ({ page }) => {
+  // A test qBittorrent has no Python or search plugins, so only the search endpoints are stubbed; everything else is real.
+  const calls: string[] = []
+  const json = (body: unknown) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(body) })
+  await page.route('**/api/v2/search/plugins', (r) => r.fulfill(json([{ name: 'sample', fullName: 'Sample plugin', enabled: true, supportedCategories: [{ id: 'all', name: 'All categories' }] }])))
+  await page.route('**/api/v2/search/start', async (r) => { calls.push(r.request().postData() ?? ''); await r.fulfill(json({ id: 7 })) })
+  await page.route('**/api/v2/search/results**', (r) => r.fulfill(json({ status: 'Stopped', total: 3, results: [
+    { fileName: 'Sample.Show.2020.1080p.WEB-DL.x264-GRP', fileUrl: 'magnet:?xt=urn:btih:aaa', fileSize: 3100, nbSeeders: 12, nbLeechers: 1 }, // same size as the torrent (3000 + 100)
+    { fileName: 'Sample.Show.2020.720p.HDTV', fileUrl: 'magnet:?xt=urn:btih:bbb', fileSize: 999999, nbSeeders: 3, nbLeechers: 0 },
+    { fileName: 'Sample.Show.S01E01.1080p.WEB-DL.x264-OTHER.mkv', fileUrl: 'magnet:?xt=urn:btih:ccc', fileSize: 3000, nbSeeders: 5, nbLeechers: 2 }, // same size as the first file
+  ] })))
+  await page.route('**/api/v2/search/stop', (r) => r.fulfill({ status: 200, body: '' }))
+  await page.route('**/api/v2/search/delete', (r) => r.fulfill({ status: 200, body: '' }))
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  const row = await addSimTorrent(page)
+
+  // 1. Torrent level, from the context menu.
+  await row.click({ button: 'right' })
+  await page.getByRole('menuitem', { name: 'Search for similar torrents' }).click()
+  await expect(page.getByRole('heading', { name: 'Search', level: 1 })).toBeVisible()
+  await expect(page.getByLabel('Search for torrents')).toHaveValue('Sample Show 2020')
+  await expect(page.getByText(/exactly 3\.0 KiB \(3,100 bytes\)/)).toBeVisible()
+  const hit = page.getByRole('row').filter({ hasText: 'Sample.Show.2020.1080p.WEB-DL.x264-GRP' })
+  await expect(hit).toBeVisible({ timeout: 10_000 })
+  await expect(hit.getByText('Same size')).toBeVisible()
+  await expect(page.getByRole('row').filter({ hasText: '720p.HDTV' }).getByText('Same size')).toHaveCount(0)
+  expect(calls.some((c) => c.includes('pattern=Sample+Show+2020') || c.includes('pattern=Sample%20Show%202020'))).toBe(true)
+  expect(page.url()).toMatch(/#\/search$/) // the request was consumed; a reload won't repeat it
+
+  // 2. File level, from the Files tab (the file is not downloaded, so it is "incomplete").
+  await page.goto('/#/')
+  await row.click(); await page.getByRole('button', { name: 'Show details' }).click()
+  await page.getByRole('complementary', { name: 'Torrent details' }).getByRole('tab', { name: 'Files' }).click()
+  await page.getByRole('link', { name: 'Search for Sample.Show.S01E01.1080p.WEB-DL.x264-GRP.mkv' }).click()
+  await expect(page.getByLabel('Search for torrents')).toHaveValue('Sample Show S01E01')
+  await expect(page.getByText(/exactly 2\.9 KiB \(3,000 bytes\)/)).toBeVisible()
+  await expect(page.getByRole('row').filter({ hasText: 'x264-OTHER' }).getByText('Same size')).toBeVisible({ timeout: 10_000 })
+
+  await removeRow(page, row)
+  expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
+})

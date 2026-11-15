@@ -7,6 +7,8 @@ import { fakeMagnet, setAppearance, signIn } from './helpers'
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 
 async function audit(page: Page, where: string) {
+  // Toasts fade in and out; wait until none is on screen so we never sample one mid-fade.
+  await page.locator('.toast').first().waitFor({ state: 'detached', timeout: 10_000 }).catch(() => undefined)
   // Never sample mid-transition (fading toasts and menus have transient, meaningless contrast).
   await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))))
   const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze()
@@ -83,4 +85,24 @@ for (const skin of SKINS) {
       await expect(row).toHaveCount(0, { timeout: 10_000 })
     })
   }
+}
+
+// The Search results page only has content when plugins exist; a test qBittorrent has none, so its search endpoints are stubbed.
+for (const [skin, mode] of [['signal', 'light'], ['paper', 'dark'], ['graphite', 'light']] as const) {
+  test(`a11y: search results with a same-size match, ${skin} ${mode}`, async ({ page }) => {
+    const json = (body: unknown) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(body) })
+    await page.route('**/api/v2/search/plugins', (r) => r.fulfill(json([{ name: 's', fullName: 'Sample', enabled: true, supportedCategories: [{ id: 'all', name: 'All' }] }])))
+    await page.route('**/api/v2/search/start', (r) => r.fulfill(json({ id: 3 })))
+    await page.route('**/api/v2/search/results**', (r) => r.fulfill(json({ status: 'Stopped', total: 2, results: [
+      { fileName: 'Sample.Show.2020.1080p', fileUrl: 'magnet:?a', fileSize: 5000, nbSeeders: 9, nbLeechers: 1 },
+      { fileName: 'Sample.Show.2020.720p', fileUrl: 'magnet:?b', fileSize: 1234, nbSeeders: -1, nbLeechers: -1 }] })))
+    await page.route('**/api/v2/search/stop', (r) => r.fulfill({ status: 200, body: '' }))
+    await page.route('**/api/v2/search/delete', (r) => r.fulfill({ status: 200, body: '' }))
+    await setAppearance(page, skin, mode)
+    await signIn(page)
+    await page.goto('/#/search?q=Sample+Show+2020&size=5000')
+    await expect(page.getByText('Same size')).toBeVisible({ timeout: 10_000 })
+    await page.waitForTimeout(400)
+    await audit(page, `${skin}/${mode} search results`)
+  })
 }
