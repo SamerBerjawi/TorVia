@@ -1,8 +1,14 @@
 import { useEffect } from 'react'
-import { logout } from '@/api/auth'
-import { formatBytes, formatSpeed } from '@/domain/format'
+import { Icon } from './components/Icon'
+import { useAppearance, useMediaQuery, useServerVersion } from './hooks'
+import { DisconnectedIcon } from './icons'
+import { GraphiteLayout } from './layouts/GraphiteLayout'
+import { PaperLayout } from './layouts/PaperLayout'
+import { SignalLayout } from './layouts/SignalLayout'
 import { engine, useEngine } from './store'
-import { TorrentTable } from './TorrentTable'
+import { useTorrentView } from './useTorrentView'
+
+const isTyping = (el: Element | null) => el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable)
 
 export function App() {
   useEffect(() => {
@@ -10,43 +16,38 @@ export function App() {
     return () => engine.stop()
   }, [])
 
-  const { data, connection } = useEngine()
-  const s = data.serverState
+  // "/" or Ctrl/⌘+K focuses the search/query field of whichever skin is active.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key === '/' && !isTyping(document.activeElement)) || (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey))) {
+        const el = document.querySelector<HTMLInputElement>('[data-search]')
+        if (el) {
+          e.preventDefault()
+          el.focus()
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const { connection } = useEngine()
+  const { skin } = useAppearance()
+  const narrow = useMediaQuery('(max-width: 800px)')
+  const version = useServerVersion()
+  const view = useTorrentView()
 
   if (connection.kind === 'unauthenticated') {
     return (
-      <div className="empty" role="alert">
-        <div>
-          <p>Your session has ended.</p>
-          <button className="btn primary" onClick={() => location.reload()}>Sign in again</button>
-        </div>
+      <div className="fullscreen" role="alert">
+        <Icon icon={DisconnectedIcon} size={28} />
+        <p>Your session has ended.</p>
+        <button type="button" className="btn btn--accent" onClick={() => location.reload()}>Sign in again</button>
       </div>
     )
   }
+  if (connection.kind === 'connecting') return <div className="fullscreen" role="status">Connecting to qBittorrent…</div>
 
-  return (
-    <div className="shell">
-      <header className="topbar">
-        <span className="brand">Nuvora</span>
-        <span className="spacer" />
-        <button className="btn" onClick={() => void logout().then(() => location.reload())}>Sign out</button>
-      </header>
-      <main style={{ minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        {connection.kind === 'degraded' && (
-          <div className="banner" data-tone="warn" role="status">
-            Connection to qBittorrent lost — retrying. Showing last known data.
-          </div>
-        )}
-        {connection.kind === 'connecting' ? <div className="empty">Connecting…</div> : <TorrentTable torrents={data.torrents} />}
-      </main>
-      <footer className="statusbar">
-        <span><i className="led" data-state={connection.kind} />{connection.kind === 'online' ? 'Connected' : connection.kind === 'connecting' ? 'Connecting' : 'Reconnecting'}</span>
-        <span>↓ {formatSpeed(s.dl_info_speed ?? 0)}</span>
-        <span>↑ {formatSpeed(s.up_info_speed ?? 0)}</span>
-        <span>Free {s.free_space_on_disk === undefined ? '—' : formatBytes(s.free_space_on_disk)}</span>
-        <span className="spacer" />
-        <span>{data.torrents.size} torrents</span>
-      </footer>
-    </div>
-  )
+  const props = { view, narrow, version }
+  return skin === 'paper' ? <PaperLayout {...props} /> : skin === 'signal' ? <SignalLayout {...props} /> : <GraphiteLayout {...props} />
 }

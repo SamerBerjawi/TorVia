@@ -52,3 +52,30 @@ describe('reconcile', () => {
     expect(c.rid).toBe(1) // rid wrap-around is accepted on full update
   })
 })
+
+describe('reconcile categories and tags', () => {
+  it('merges and removes categories, keeping identity of untouched ones', () => {
+    const a = reconcile(emptySyncState, {
+      rid: 1,
+      full_update: true,
+      categories: { linux: { name: 'linux', savePath: '/d/linux' }, films: { name: 'films', savePath: '' } },
+    })
+    const b = reconcile(a, { rid: 2, categories: { linux: { savePath: '/x' } }, categories_removed: [] })
+    expect(b.categories.get('linux')).toEqual({ name: 'linux', savePath: '/x' })
+    expect(b.categories.get('films')).toBe(a.categories.get('films'))
+    const c = reconcile(b, { rid: 3, categories_removed: ['films'] })
+    expect([...c.categories.keys()]).toEqual(['linux'])
+  })
+
+  it('adds and removes tags without duplicates', () => {
+    const a = reconcile(emptySyncState, { rid: 1, full_update: true, tags: ['4k', 'archive'] })
+    const b = reconcile(a, { rid: 2, tags: ['4k', 'lts'], tags_removed: ['archive'] })
+    expect(b.tags).toEqual(['4k', 'lts'])
+  })
+
+  it('keeps tag array identity when no tag change', () => {
+    const a = reconcile(emptySyncState, { rid: 1, full_update: true, tags: ['x'] })
+    const b = reconcile(a, { rid: 2, torrents: { h: { name: 'n' } } })
+    expect(b.tags).toBe(a.tags)
+  })
+})

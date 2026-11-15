@@ -3,7 +3,15 @@
 A next-generation alternative WebUI for [qBittorrent](https://github.com/qbittorrent/qBittorrent).
 Static assets only — no backend, database or extra container. qBittorrent serves it and handles authentication.
 
-> **Status: early skeleton.** Sign in, live torrent list (virtualised), connection recovery. Everything else is on the roadmap.
+> **Status: early preview.** Sign in, live torrent list, filters, query language, details overview, three skins. Torrent actions, adding torrents, RSS, search and settings are on the roadmap.
+
+## Features so far
+- **Three skins, each light & dark** (or follow the system): *Graphite* (sidebar + side details), *Paper* (desktop toolbar + bottom details), *Signal* (query-first console with grouped rows and live speed sparklines). Switch under **Appearance**.
+- Virtualised table for large libraries, sortable columns, multi-select (click, ⌘/Ctrl-click, Shift-click), keyboard navigation (↑↓ / j k, Space, Enter, Esc, ⌘/Ctrl-A, `/` or ⌘/Ctrl-K to search).
+- Status views, categories and tags with live counts.
+- Query language in every search box: `ubuntu state:downloading cat:linux tag:4k size:>1GB ratio:<1 progress:>=50 -cat:films`. Signal adds chips, autocomplete and saved views.
+- IDE-style file-type icons from the torrent's extension.
+- Connection-loss banner with automatic recovery.
 
 ## Install (qBittorrent Alternative WebUI)
 

@@ -1,11 +1,13 @@
 import { ApiError, getJson } from '@/api/transport'
 import type { MainDataResponse } from '@/api/types'
 import { backoffMs, transition, type ConnectionEvent, type ConnectionState } from './connection'
+import { emptyHistory, pushSample, type SpeedHistory } from './history'
 import { emptySyncState, reconcile, type SyncState } from './reconcile'
 
 export interface EngineSnapshot {
   readonly data: SyncState
   readonly connection: ConnectionState
+  readonly history: SpeedHistory
 }
 
 const ACTIVE_INTERVAL_MS = 2_000
@@ -18,7 +20,7 @@ const HIDDEN_INTERVAL_MS = 15_000
  * `subscribe` / `getSnapshot` (useSyncExternalStore).
  */
 export class SyncEngine {
-  private snapshot: EngineSnapshot = { data: emptySyncState, connection: { kind: 'connecting' } }
+  private snapshot: EngineSnapshot = { data: emptySyncState, connection: { kind: 'connecting' }, history: emptyHistory }
   private listeners = new Set<() => void>()
   private timer: ReturnType<typeof setTimeout> | undefined
   private abort: AbortController | undefined
@@ -73,7 +75,8 @@ export class SyncEngine {
       const delta = await getJson<MainDataResponse>(`sync/maindata?rid=${this.snapshot.data.rid}`, abort.signal)
       const data = reconcile(this.snapshot.data, delta)
       this.dispatch({ type: 'sync-ok', at: Date.now() })
-      if (data !== this.snapshot.data) this.emit({ data })
+      const history = pushSample(this.snapshot.history, data.serverState.dl_info_speed ?? 0, data.serverState.up_info_speed ?? 0)
+      this.emit(data !== this.snapshot.data ? { data, history } : { history })
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return
       if (e instanceof ApiError && (e.kind === 'unauthenticated' || e.kind === 'forbidden')) {

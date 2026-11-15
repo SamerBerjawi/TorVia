@@ -4,23 +4,33 @@ Alternative WebUI for qBittorrent. Static build only; **no backend**. Verify wit
 
 ## Layers (never import upward)
 - `src/api/`    typed fetch transport + endpoint helpers. No React.
-- `src/sync/`   `sync/maindata` engine: `reconcile.ts` (pure reducer), `connection.ts` (pure state machine), `engine.ts` (side effects). No React.
-- `src/domain/` pure formatting / status mapping. No React.
-- `src/app/`    React UI + `store.ts` (`useSyncExternalStore` over the engine).
-- `src/entries/login` → built to `dist/nuvora/public`; `src/entries/app` → `dist/nuvora/private`.
-- `src/ui/`     design tokens (`tokens.css`) — use semantic tokens, never raw colours.
+- `src/sync/`   `sync/maindata` engine: `reconcile.ts` (pure reducer: torrents, categories, tags, server state), `connection.ts` (pure state machine), `history.ts` (speed samples), `engine.ts` (side effects). No React.
+- `src/domain/` pure logic: `filters.ts` (status views), `query.ts` (query language), `sort.ts`, `fileKind.ts` (extension → file kind), `format.ts`, `status.ts`. No React.
+- `src/ui/`     `theme.ts` (skin × mode, no React), `tokens.css` (all colours/fonts), `app.css`, `login.css`.
+- `src/app/`    React. `store.ts` (engine snapshot), `uiStore.ts` (zustand: filters, sort, selection, details), `useTorrentView.ts` (derived rows/groups/counts), `columns.tsx` (per-skin column sets), `components/`, `layouts/` (one per skin).
+- `src/entries/login` → `dist/nuvora/public`; `src/entries/app` → `dist/nuvora/private`.
+
+## Skins
+Three skins — `graphite`, `paper`, `signal` — each with light and dark, selected via `<html data-skin data-mode>`.
+- Colours, fonts, row height: **only** in `src/ui/tokens.css` as semantic variables (`--text-3`, `--st-dl`, …). Never hard-code colours in components.
+- Layout differences live in `src/app/layouts/*Layout.tsx`; shared behaviour (filtering, sorting, selection, keyboard) must stay in shared components/hooks so all skins stay in sync.
+- New UI glyphs: add to `src/app/icons.ts` (Hugeicons Free, stroke rounded) and render with `<Icon>`. Never import `@hugeicons/core-free-icons` elsewhere.
+- File-type icons: `domain/fileKind.ts` decides the kind; `app/components/FileIcon.tsx` decides the picture. Swap icon packs there only.
+- Fonts are self-hosted via @fontsource (no external requests; CSP forbids them).
 
 ## qBittorrent constraints (verified in qBittorrent `webapplication.cpp`)
 - Anonymous requests get `public/`, authenticated get `private/` (fallback `public/`). No SPA fallback → hash routing for any future routes.
 - Server rewrites `${LANG}`, `${CACHEID}`, `QBT_TR(` in every text file it serves → `scripts/guard-package.mjs` fails the build if present. Never write those literals in source (including template strings).
 - Symlinks forbidden; per-file limit 10 MiB; JS/CSS cached 12 h → keep content-hashed filenames.
-- No CSP is sent for alt UIs → CSP lives in each `index.html`. No inline scripts; keep `style-src 'self'`.
+- No CSP is sent for alt UIs → CSP lives in each `index.html`. No inline scripts; keep `style-src 'self'` (React style props are fine).
 - Same-origin relative URLs only (`api/v2/...`, `base: './'`) so reverse-proxy sub-paths work.
 - Bad login: WebAPI < 2.14 → 200 + body `Fails.`; ≥ 2.14 → 401; 403 = IP banned.
-- 5.x renamed `paused*` → `stopped*` states; keep both in `domain/status.ts`.
+- 5.x renamed `paused*` → `stopped*` states; keep both in `domain/status.ts` and `domain/filters.ts`.
+- Clipboard API only works in secure contexts (HTTPS/localhost); always handle failure.
 
 ## Rules
 - Strict TS (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`). No `any`.
 - No fabricated data in production code; test fixtures stay in `*.test.ts`.
 - No silent failures; destructive actions need explicit confirmation (none exist yet).
-- Add a test for any change to `reconcile`, `connection`, `format` or `status`.
+- No buttons for features that don't work yet.
+- Add a test for any change to `src/sync/` or `src/domain/`.

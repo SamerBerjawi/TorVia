@@ -1,0 +1,53 @@
+import { STATUS_FILTER_LABEL, type StatusFilter } from '@/domain/filters'
+import { PAPER_COLUMNS } from '../columns'
+import { AppearanceMenu } from '../components/AppearanceMenu'
+import { BrandMark, SignOutButton } from '../components/Chrome'
+import { DetailsPanel } from '../components/DetailsPanel'
+import { Icon } from '../components/Icon'
+import { SearchBox } from '../components/SearchBox'
+import { Sidebar, STATUS_ICON } from '../components/Sidebar'
+import { ConnectionBanner, StatusBar } from '../components/StatusBar'
+import { TorrentTable } from '../components/TorrentTable'
+import { useEngine } from '../store'
+import { useUi } from '../uiStore'
+import type { LayoutProps } from './types'
+
+const SEGMENTS: StatusFilter[] = ['all', 'downloading', 'seeding', 'completed', 'stopped', 'errored']
+
+/** B · Paper — native-desktop toolbar with status segments, slim source list, details pane below. */
+export function PaperLayout({ view, narrow, version }: LayoutProps) {
+  const { data } = useEngine()
+  const { status, setStatus, focused, detailsOpen } = useUi()
+  const detail = detailsOpen && focused ? data.torrents.get(focused) : undefined
+  return (
+    <div className="shell">
+      <header className="topbar">
+        <div className="topbar__brand"><BrandMark /><span className="brandname">Nuvora</span></div>
+        <div className="segmented segmented--toolbar" role="group" aria-label="Status filter">
+          {SEGMENTS.map((s) => (
+            <button key={s} type="button" aria-pressed={status === s} data-tone={s === 'errored' ? 'err' : undefined} onClick={() => setStatus(s)}>
+              <Icon icon={STATUS_ICON[s]} size={14} />
+              {STATUS_FILTER_LABEL[s]} <span className="segmented__count">{view.counts[s]}</span>
+            </button>
+          ))}
+        </div>
+        <span className="topbar__spacer" />
+        <SearchBox placeholder="Search" />
+        <AppearanceMenu compact />
+        <SignOutButton />
+      </header>
+      <div className="shell__body">
+        <Sidebar view={view} showStatus={false} />
+        <main className="main">
+          <ConnectionBanner />
+          <TorrentTable columns={PAPER_COLUMNS} items={view.flatItems} order={view.order} rowHeight={narrow ? 52 : 40} label="Torrents" emptyText={view.total ? 'No torrents match these filters.' : 'No torrents yet.'} narrow={narrow} />
+          {detail && focused && <DetailsPanel hash={focused} torrent={detail} orientation="bottom" />}
+        </main>
+      </div>
+      <StatusBar>
+        <span className="statusbar__item">{view.rows.length} of {view.total} shown</span>
+        {version && <span className="statusbar__item statusbar__wide">qBittorrent {version}</span>}
+      </StatusBar>
+    </div>
+  )
+}
