@@ -78,7 +78,19 @@ Every release archive is installed into a fresh qBittorrent and checked by CI be
 - **Torrent actions** from the right-click menu, the selection bar, single-key shortcuts and the **⌘K command palette**: start, stop, force start, recheck, reannounce, remove (optionally with files), set category/tags/location, rename, queue order, speed limits, sequential download, first/last piece priority, super seeding, automatic management, copy name/hash/magnet.
 - **Add torrents** from magnet links, URLs or .torrent files — via the dialog (N), drag & drop anywhere, or pasting a magnet link.
 - Toast notifications for every action, with qBittorrent's error reason on failure.
+- **Find similar torrents for stuck downloads:** when every peer is missing the same pieces, only a different swarm can finish the job. *Search for similar torrents* (right-click menu or Ctrl/⌘ K) searches with the release name cleaned of encode tags and release group, and a *Search for this file* button sits next to every incomplete file in the Files tab. Results with exactly the same size are marked **Same size**. Needs qBittorrent search to be set up (Python and an enabled plugin); the buttons stay hidden otherwise. See [Unsticking a stalled download](#unsticking-a-stalled-download).
 - Tested end to end against real qBittorrent 5.0, 5.1, 5.2 and 5.3.
+
+### Unsticking a stalled download
+If a torrent sits at the same percentage and its few peers all have exactly what you have, the missing pieces are in nobody's copy. Another torrent that contains the same file can supply them, even with a different infohash:
+
+1. **Find what's missing.** In the **Files** tab, look for files below 100%. Often it's one file in a pack.
+2. **Search for it.** Use *Search for this file* next to that file (or *Search for similar torrents* for the whole release). A result marked **Same size** is very likely identical.
+3. **Download only that file.** Add the other torrent, set everything to *Skip*, then give just the matching file *Normal* priority (the Files tab sets priorities for files and folders).
+4. **Move it over.** Put the finished file in the stuck torrent's folder under exactly the same path and name (the Files tab can rename).
+5. **Recheck** the stuck torrent. qBittorrent keeps every piece that verifies, so pieces fully covered by that file complete. A few pieces at the file's edges may still need the original swarm.
+
+Torvia finds the candidates; moving the file and rechecking is still manual, and the match has to be byte-identical (a different encode of the same episode won't verify).
 
 ## Third-party code
 - Charts: [Bklit UI](https://github.com/bklit/bklit-ui) (MIT), vendored in `src/vendor/bklit` by `scripts/vendor-bklit.mjs`.
@@ -101,7 +113,7 @@ bash e2e/smoke-release.sh dist/torvia.zip             # install the archive into
 ```
 
 ## Also included
-Search (qBittorrent search plugins), RSS feeds and auto-download rules, torrent creator, execution log, statistics charts, settings, category/tag management, column chooser with density and saved layouts, global speed limits, opt-in download notifications, and an installable web-app manifest. Design decisions: `docs/adr/`. Accessibility: `docs/accessibility.md`.
+Search (qBittorrent search plugins, also reachable from any torrent or file via *Search for similar*), RSS feeds and auto-download rules, torrent creator, execution log, statistics charts, settings, category/tag management, column chooser with density and saved layouts, global speed limits, opt-in download notifications, and an installable web-app manifest. Design decisions: `docs/adr/`. Accessibility: `docs/accessibility.md`.
 
 ## How packaging works
 qBittorrent serves `public/` to signed-out clients and `private/` to signed-in ones (falling back to `public/`). So the build
