@@ -36,8 +36,8 @@ export const GRAPHITE_COLUMNS: readonly Column[] = [
       </span>
     ),
   },
-  { id: 'status', label: 'Status', width: '120px', sortKey: 'state', wide: true, render: (t) => <Status state={t.state} variant="dot" /> },
-  { id: 'progress', label: 'Progress', width: '150px', sortKey: 'progress', render: (t) => <Progress value={t.progress} variant="bar" /> },
+  { id: 'status', label: 'Status', width: '108px', sortKey: 'state', wide: true, render: (t) => <Status state={t.state} variant="dot" /> },
+  { id: 'progress', label: 'Progress', width: '140px', sortKey: 'progress', render: (t) => <Progress value={t.progress} variant="bar" /> },
   size, down, up, eta, ratio, ...EXTRA,
 ]
 

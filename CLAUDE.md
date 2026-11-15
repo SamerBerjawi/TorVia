@@ -59,8 +59,9 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 - Web UI port/credentials/certificates are deliberately not editable (lock-out risk). Saves send only changed keys via `app/setPreferences`.
 - Full-page routes render through the layouts' `page` slot (lazy-loaded).
 
-## Table columns
+## Table columns, density, layouts
 - Each skin defines its column set in `app/columns.tsx` (`locked`, `defaultHidden`, `hideInChooser` flags). `domain/columns.ts` resolves the user's order/visibility (pure, tested); `app/columnPrefs.ts` stores it per skin in localStorage; `ColumnChooser` is the UI. New columns: add to `EXTRA` (and a sort key in `domain/sort.ts` if sortable).
 
 ## Global speed limits
 - `dialogs/GlobalSpeedDialog.tsx` edits the normal and alternative limits via `app/setPreferences` (bytes/s; `domain/rate.ts` handles KiB/s ↔ MiB/s). The status bar button shows the limits in force from sync (`server_state.dl_rate_limit/up_rate_limit`); it is hidden on phones but reachable from the command palette.
+- Density (`compact | comfortable | spacious`) shifts each skin's base row height (`domain/layouts.ts` `DENSITY_DELTA`); phones keep tap-sized rows. Saved layouts = columns + sort + density, per skin, validated on load (`parseLayouts`). Stores: `app/tablePrefs.ts`. UI: the "Table options" popover (`ColumnChooser.tsx`).

@@ -10,6 +10,8 @@ import { TorrentContextMenu } from '../actions/ActionMenus'
 import type { ActionContext } from '../actions/catalogue'
 import { resolveColumns } from '@/domain/columns'
 import { useColumnPrefs } from '../columnPrefs'
+import { DENSITY_DELTA } from '@/domain/layouts'
+import { useDensity } from '../tablePrefs'
 import { useAppearance } from '../hooks'
 import { ColumnChooser } from './ColumnChooser'
 import { Icon } from './Icon'
@@ -45,7 +47,7 @@ interface Props {
   ctx: ActionContext
 }
 
-const CHOOSER_WIDTH = '28px'
+const CHOOSER_WIDTH = '24px'
 const GROUP_HEIGHT = 44
 const HEADER_HEIGHT = 32
 
@@ -90,8 +92,11 @@ function GroupHeader({ item, top }: { item: Extract<TableItem, { type: 'group' }
   )
 }
 
-export function TorrentTable({ columns: allColumns, items, order, rowHeight, label, emptyText, narrow, ctx }: Props) {
+export function TorrentTable({ columns: allColumns, items, order, rowHeight: baseRowHeight, label, emptyText, narrow, ctx }: Props) {
   const { skin } = useAppearance()
+  const density = useDensity()
+  // Touch layouts keep their tap-sized rows; density only applies where a pointer is expected.
+  const rowHeight = narrow ? baseRowHeight : baseRowHeight + DENSITY_DELTA[density]
   const prefs = useColumnPrefs(skin)
   const resolved = useMemo(() => resolveColumns(allColumns, prefs), [allColumns, prefs])
   const labels = useMemo(() => new Map(allColumns.filter((c) => !c.hideInChooser && c.label).map((c) => [c.id, c.label])), [allColumns])
@@ -104,7 +109,7 @@ export function TorrentTable({ columns: allColumns, items, order, rowHeight, lab
   const template = useMemo(() => [...columns.map((c) => c.width), CHOOSER_WIDTH].join(' '), [columns])
   // Narrowest width at which every column still fits; below it the table scrolls horizontally.
   const minWidth = useMemo(
-    () => columns.reduce((sum, c) => sum + (Number(/(\d+)px/.exec(c.width)?.[1]) || 0), 0) + columns.length * 12 + 48 + 36,
+    () => columns.reduce((sum, c) => sum + (Number(/(\d+)px/.exec(c.width)?.[1]) || 0), 0) + columns.length * 12 + 32 + 24, // gaps + row padding + chooser column
     [columns],
   )
   const { selected, focused, sort, select, selectAll, clearSelection, focus, openDetails, closeDetails, detailsOpen, sortBy } = useUi()
@@ -165,7 +170,7 @@ export function TorrentTable({ columns: allColumns, items, order, rowHeight, lab
   }
 
   return (
-    <div className="ttable" role="grid" aria-label={label} aria-rowcount={order.length + 1} aria-multiselectable="true">
+    <div className="ttable" data-density={narrow ? undefined : density} role="grid" aria-label={label} aria-rowcount={order.length + 1} aria-multiselectable="true">
       <TorrentContextMenu ctx={ctx}>
       <div
         ref={scroller}

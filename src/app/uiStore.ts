@@ -20,6 +20,7 @@ interface UiState {
   setTag(t: string | null): void
   setQuery(q: string): void
   sortBy(key: SortKey): void
+  setSort(sort: Sort): void
   setGroupByCategory(on: boolean): void
   select(hash: string, mode: 'single' | 'toggle' | 'range', order: readonly string[]): void
   selectAll(order: readonly string[]): void
@@ -49,6 +50,7 @@ export const useUi = create<UiState>()((set, get) => ({
   setCategory: (category) => set({ category }),
   setTag: (tag) => set({ tag }),
   setQuery: (query) => set({ query }),
+  setSort: (sort) => set({ sort }),
   sortBy: (key) => {
     const { sort } = get()
     set({ sort: sort.key === key ? { key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: NUMERIC_DEFAULT_DESC.has(key) ? 'desc' : 'asc' } })
