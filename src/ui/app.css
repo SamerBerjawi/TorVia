@@ -168,7 +168,7 @@
 [data-skin='paper'] .trow[aria-selected='true'] .tcell,
 [data-skin='paper'] .trow[aria-selected='true'] .progress__pct,
 [data-skin='paper'] .trow[aria-selected='true'] .file-icon { color: var(--on-selected); }
-[data-skin='paper'] .trow[aria-selected='true'] .status--pill { color: var(--on-selected); background: rgba(255,255,255,0.2); }
+[data-skin='paper'] .trow[aria-selected='true'] .status--pill { color: var(--on-selected); background: rgba(0,0,0,0.28); }
 [data-skin='paper'] .trow[aria-selected='true'] .progress__bar { background: rgba(255,255,255,0.3); }
 [data-skin='paper'] .trow[aria-selected='true'] .progress__bar i { background: var(--on-selected); }
 [data-skin='paper'] .trow[data-focused] { box-shadow: none; }
@@ -438,6 +438,7 @@
 .palette__list li[aria-selected='true'] { background: var(--selected); color: var(--on-selected); }
 .palette__label { flex: 1; }
 .palette__group { font-size: 11px; color: var(--text-4); }
+.palette__list li[aria-selected='true'] .palette__group { color: var(--on-selected); }
 .palette__empty { justify-content: center; color: var(--text-4) !important; }
 
 /* Menus (dropdown + context) */
