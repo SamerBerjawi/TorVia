@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { clampPaneHeight, PANE_DEFAULT } from '@/domain/pane'
 import { STATUS_FILTER_LABEL, type StatusFilter } from '@/domain/filters'
 import { PAPER_COLUMNS } from '../columns'
 import { SelectionBar } from '../actions/SelectionBar'
@@ -60,8 +61,8 @@ export function PaperLayout({ view, narrow, version, route, page, ctx }: LayoutP
           <TorrentTable columns={PAPER_COLUMNS} items={view.flatItems} order={view.order} rowHeight={narrow ? 52 : 40} label="Torrents" emptyText={view.total ? 'No torrents match these filters.' : 'No torrents yet.'} narrow={narrow} ctx={ctx} />
           {detail && focused && (
             <>
-              {!narrow && <Splitter height={paneHeight} onChange={setPaneHeight} container={mainRef} />}
-              <DetailsPanel hash={focused} torrent={detail} orientation="bottom" height={narrow ? undefined : paneHeight} />
+              {!narrow && <Splitter size={paneHeight} onChange={setPaneHeight} container={mainRef} clamp={clampPaneHeight} defaultSize={PANE_DEFAULT} />}
+              <DetailsPanel hash={focused} torrent={detail} orientation="bottom" size={narrow ? undefined : paneHeight} />
             </>
           )}
         </main>

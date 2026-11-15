@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { PANE_DEFAULT, parseStoredHeight } from '@/domain/pane'
+import { PANE_DEFAULT, parseStoredHeight, parseStoredWidth, SIDE_DEFAULT } from '@/domain/pane'
 import { DENSITIES, parseLayouts, removeLayout, upsertLayout, type Density, type Layout } from '@/domain/layouts'
 
 /** Row density and saved table layouts: device-local, kept in localStorage (failures keep the session value). */
@@ -46,3 +46,8 @@ export const deleteLayout = (skin: string, name: string) => layouts.set(removeLa
 const PANE_KEY = 'torvia.paneHeight'
 const pane = makeStore<number>(PANE_KEY, (() => { try { return parseStoredHeight(localStorage.getItem(PANE_KEY)) } catch { return PANE_DEFAULT } })())
 export const usePaneHeight = (): [number, (h: number) => void] => [useSyncExternalStore(pane.subscribe, pane.get), pane.set]
+
+/** Width of the details panel beside the table (Graphite, Signal), remembered per browser. */
+const SIDE_KEY = 'torvia.sideWidth'
+const side = makeStore<number>(SIDE_KEY, (() => { try { return parseStoredWidth(localStorage.getItem(SIDE_KEY)) } catch { return SIDE_DEFAULT } })())
+export const useSideWidth = (): [number, (w: number) => void] => [useSyncExternalStore(side.subscribe, side.get), side.set]

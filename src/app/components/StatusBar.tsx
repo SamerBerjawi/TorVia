@@ -4,6 +4,7 @@ import { transferApi } from '@/api/torrents'
 import { openDialog } from '../dialogs/dialogStore'
 import { run } from '../actions/run'
 import { ConnectedIcon, DisconnectedIcon, DiskIcon, DownloadIcon, SpeedIcon, UploadIcon } from '../icons'
+import { CURRENT_VERSION } from '../updates'
 import { useEngine } from '../store'
 import { Icon } from './Icon'
 
@@ -27,6 +28,7 @@ export function StatusBar({ children }: { children?: ReactNode }) {
       <span className="statusbar__spacer" />
       <SpeedLimitsButton />
       <AltSpeedToggle />
+      <a className="statusbar__item statusbar__wide statusbar__ver" href="#/settings" title="About Torvia (Settings)">Torvia {CURRENT_VERSION}</a>
       {children}
     </footer>
   )

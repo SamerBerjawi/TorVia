@@ -40,12 +40,12 @@ const TorrentStats = lazy(() => import('../charts/TorrentStats'))
 const date = (s: number) => (s > 0 ? new Date(s * 1000).toLocaleString() : '—')
 
 /** Overview of one torrent from sync data. Files/Trackers/Peers tabs come with their endpoints. */
-export function DetailsPanel({ hash, torrent, orientation, height }: { hash: string; torrent: Torrent; orientation: 'side' | 'bottom'; height?: number | undefined }) {
+export function DetailsPanel({ hash, torrent, orientation, size }: { hash: string; torrent: Torrent; orientation: 'side' | 'bottom'; size?: number | undefined }) {
   const close = useUi((s) => s.closeDetails)
   const [tab, setTab] = useState<'overview' | 'files' | 'trackers' | 'peers' | 'statistics'>('overview')
   const s = toStatus(torrent.state)
   return (
-    <aside className={`details details--${orientation}`} aria-label="Torrent details" style={{ ...statusStyle(torrent.state), ...(height ? { flexBasis: height } : null) }}>
+    <aside className={`details details--${orientation}`} aria-label="Torrent details" style={{ ...statusStyle(torrent.state), ...(size ? { flexBasis: size } : null) }}>
       <header className="details__head">
         <div className="details__titlerow">
           <FileIcon name={torrent.name} size={18} />

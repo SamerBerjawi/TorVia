@@ -5,6 +5,8 @@ All notable changes to Torvia are documented here. The format follows [Keep a Ch
 ## [Unreleased]
 
 ### Added
+- **Graphite and Signal:** the details panel beside the table can now be resized by dragging the handle on its left edge (or with the left and right arrow keys; Home and End jump to the widest and narrowest; double-click resets). The width is remembered. It always leaves room for the table.
+- **Torvia version everywhere:** shown next to the qBittorrent version in the status bar of all three styles (Graphite also in the sidebar header). In Graphite and Paper it links to *Settings → About*.
 - **Peers tab:** a Country column with the flag and two-letter code for each peer (hover for the country name). Peers on private addresses show a dash; if none of the peers has a country, a note explains how to turn on *Resolve peer countries* in qBittorrent. The 257 flags ship inside the app (flag-icons, MIT), so nothing is fetched from the internet; this adds about 0.9 MB to the download.
 
 ### Fixed

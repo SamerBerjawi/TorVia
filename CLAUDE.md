@@ -81,3 +81,6 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 
 ## Country flags
 - Peers tab shows `flags/<cc>.svg` (flag-icons, MIT), copied into `dist/torvia/private/flags` by `scripts/copy-flags.mjs` as part of `build:app` (not committed). The country code goes into an image URL, so it is validated by `domain/country.ts` (exactly two ASCII letters) before use; a missing file hides the image. qBittorrent only reports countries when *Resolve peer countries* is on. The E2E flag test stubs only the peers response (a test server has no public-IP peers); keep that to this one request.
+
+## Resizable details panel
+- `components/Splitter.tsx` (pointer + keyboard, `role=separator`) with sizing rules in `domain/pane.ts`: Paper resizes the height of the bottom panel, Graphite and Signal the width of the side panel (vertical splitter; each layout passes its own reserve so the table keeps room). Sizes persist in `app/tablePrefs.ts`. The splitter is hidden on narrow screens, where details open full-screen.

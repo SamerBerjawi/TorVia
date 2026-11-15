@@ -309,3 +309,68 @@ test('peers tab: country flags (rendering uses a stubbed peer list; the flag fil
   await page.getByRole('alertdialog').getByRole('button', { name: /^remove/i }).click()
   expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
 })
+
+for (const skin of ['graphite', 'signal'] as const) {
+  test(`${skin}: the details panel beside the table can be resized by dragging or keyboard, and remembers its width`, async ({ page }) => {
+    const errors = trackErrors(page)
+    await setAppearance(page, skin, 'dark')
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+    const name = `a-side-${skin}-${Date.now()}.iso`
+    await page.keyboard.press('n')
+    const add = page.getByRole('dialog', { name: 'Add torrents' })
+    await add.getByLabel(/magnet links or urls/i).fill(fakeMagnet(name))
+    await add.getByLabel('Start torrent').uncheck()
+    await add.getByRole('button', { name: /add stopped/i }).click()
+    const rowOf = () => page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: name })
+    await expect(rowOf()).toBeVisible({ timeout: 15_000 })
+    await rowOf().click()
+    const toggle = page.getByRole('button', { name: 'Show details' })
+    if (await toggle.count()) await toggle.click(); else await page.keyboard.press('Enter')
+    const details = page.getByRole('complementary', { name: 'Torrent details' })
+    const sep = page.getByRole('separator', { name: 'Resize details panel' })
+    await expect(sep).toHaveAttribute('aria-orientation', 'vertical')
+    const widthOf = async () => Math.round((await details.boundingBox())!.width)
+    await expect.poll(widthOf).toBe(360)
+    // Keyboard: Left (towards the table) grows the panel by 24px; Right shrinks it.
+    await sep.focus(); await page.keyboard.press('ArrowLeft')
+    await expect.poll(widthOf).toBe(384)
+    await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight')
+    await expect.poll(widthOf).toBe(360 - 24)
+    // Pointer drag to the left grows it a lot, but it stops where the table still has room.
+    const b = (await sep.boundingBox())!
+    await page.mouse.move(b.x + b.width / 2, b.y + 200); await page.mouse.down()
+    await page.mouse.move(b.x - 180, b.y + 200, { steps: 6 }); await page.mouse.up()
+    await expect.poll(widthOf).toBeGreaterThan(480)
+    const widened = await widthOf()
+    await sep.focus(); await page.keyboard.press('Home')
+    expect(await widthOf()).toBeLessThanOrEqual(1440 - 420) // never swallows the table
+    // Remembered across reloads; double-click resets.
+    await sep.focus(); await page.keyboard.press('End'); await page.keyboard.press('ArrowLeft')
+    await expect.poll(widthOf).toBe(280 + 24)
+    await page.reload()
+    await rowOf().click()
+    if (await page.getByRole('button', { name: 'Show details' }).count()) await page.getByRole('button', { name: 'Show details' }).click(); else await page.keyboard.press('Enter')
+    await expect.poll(widthOf).toBe(280 + 24)
+    await page.getByRole('separator', { name: 'Resize details panel' }).dblclick()
+    await expect.poll(widthOf).toBe(360)
+    expect(widened).toBeGreaterThan(360)
+    await rowOf().click(); await page.keyboard.press('Delete')
+    await page.getByRole('alertdialog').getByRole('button', { name: /^remove/i }).click()
+    expect(errors).toEqual([])
+  })
+}
+
+for (const skin of ['graphite', 'paper', 'signal'] as const) {
+  test(`${skin}: the Torvia version is shown next to the qBittorrent version`, async ({ page }) => {
+    await setAppearance(page, skin, 'dark')
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page)
+    const { version } = JSON.parse((await import('node:fs')).readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
+    const bar = page.locator('.statusbar')
+    await expect(bar).toContainText(new RegExp(`torvia ${version.replace(/\./g, '\\.')}`, 'i'))
+    await expect(bar).toContainText(/qbittorrent \d|qbt \d/i)
+    if (skin === 'graphite') await expect(page.locator('.sidebar__version')).toContainText(`Torvia ${version}`)
+    if (skin !== 'signal') await bar.getByRole('link', { name: `Torvia ${version}` }).click().then(() => expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible())
+  })
+}
