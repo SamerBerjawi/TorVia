@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { fakeMagnet, setAppearance, signIn, trackErrors } from './helpers'
+import { fakeMagnet, fakeTorrentFile, setAppearance, signIn, trackErrors } from './helpers'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -26,7 +26,7 @@ test('add, organise, stop and remove a torrent end to end', async ({ page }) => 
   await add.getByLabel('Start torrent').uncheck()
   await add.getByLabel(/tags/i).fill('e2e')
   await add.getByRole('button', { name: /add stopped/i }).click()
-  const row = page.getByRole('row').filter({ hasText: name })
+  const row = page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: name })
   await expect(row).toBeVisible({ timeout: 15_000 })
 
   // New category through the category dialog.
@@ -94,7 +94,7 @@ test('details tabs load trackers, peers and files without errors', async ({ page
   await add.getByLabel(/magnet links or urls/i).fill(fakeMagnet(name))
   await add.getByLabel('Start torrent').uncheck()
   await add.getByRole('button', { name: /add stopped/i }).click()
-  const row = page.getByRole('row').filter({ hasText: name })
+  const row = page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: name })
   await expect(row).toBeVisible({ timeout: 15_000 })
   await row.click()
   await page.getByRole('button', { name: 'Show details' }).click()
@@ -106,6 +106,45 @@ test('details tabs load trackers, peers and files without errors', async ({ page
     await expect(panel.locator('table, p')).not.toHaveCount(0, { timeout: 10_000 })
     await expect(panel).not.toContainText('Loading…', { timeout: 10_000 })
   }
+  // cleanup
+  await row.click()
+  await page.keyboard.press('Delete')
+  await page.getByRole('alertdialog').getByRole('button', { name: /^remove/i }).click()
+  await expect(row).toHaveCount(0, { timeout: 10_000 })
+  expect(errors).toEqual([])
+})
+
+test('files tab: tree, folder priority and rename on a real torrent', async ({ page }) => {
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  const root = `torvia-tree-${Date.now()}`
+  await page.keyboard.press('n')
+  const add = page.getByRole('dialog', { name: 'Add torrents' })
+  await add.locator('input[type=file]').setInputFiles(fakeTorrentFile(root, { 'extras/notes.txt': 2000, 'extras/cover.jpg': 5000, 'movie.mkv': 40000 }))
+  await add.getByLabel('Start torrent').uncheck()
+  await add.getByRole('button', { name: /add stopped/i }).click()
+  const row = page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: root })
+  await expect(row).toBeVisible({ timeout: 15_000 })
+  await row.click()
+  await page.getByRole('button', { name: 'Show details' }).click()
+  const details = page.getByRole('complementary', { name: 'Torrent details' })
+  await details.getByRole('tab', { name: 'Files' }).click()
+  const tree = details.getByRole('tabpanel')
+  await expect(tree.getByText('movie.mkv')).toBeVisible()
+  // Collapse and expand the folder.
+  await tree.getByRole('button', { name: 'Collapse extras' }).click()
+  await expect(tree.getByText('notes.txt')).toHaveCount(0)
+  await tree.getByRole('button', { name: 'Expand extras' }).click()
+  // Skip the whole folder: both children follow.
+  await tree.getByLabel('Priority for extras').selectOption('0')
+  await expect(tree.getByLabel('Priority for notes.txt')).toHaveValue('0', { timeout: 10_000 })
+  await expect(tree.getByLabel('Priority for movie.mkv')).toHaveValue('1')
+  // Rename a file.
+  await tree.getByRole('button', { name: 'Rename notes.txt' }).click()
+  await tree.getByLabel('New name for notes.txt').fill('readme.txt')
+  await page.keyboard.press('Enter')
+  await expect(tree.getByText('readme.txt')).toBeVisible({ timeout: 10_000 })
   // cleanup
   await row.click()
   await page.keyboard.press('Delete')

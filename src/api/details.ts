@@ -38,6 +38,8 @@ export type FilePriority = 0 | 1 | 6 | 7
 const q = (hash: string) => `hash=${encodeURIComponent(hash)}`
 
 export const detailsApi = {
+  renameFile: (hash: string, oldPath: string, newPath: string) => postOrThrow('torrents/renameFile', { hash, oldPath, newPath }),
+  renameFolder: (hash: string, oldPath: string, newPath: string) => postOrThrow('torrents/renameFolder', { hash, oldPath, newPath }),
   files: (hash: string, signal?: AbortSignal) => getJson<TorrentFile[]>(`torrents/files?${q(hash)}`, signal),
   trackers: (hash: string, signal?: AbortSignal) => getJson<Tracker[]>(`torrents/trackers?${q(hash)}`, signal),
   /** Full peer list every call (rid=0); torrents rarely have more than a few hundred peers. */

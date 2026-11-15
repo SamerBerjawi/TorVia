@@ -30,3 +30,14 @@ export function fakeMagnet(name: string): string {
   const hex = [...crypto.getRandomValues(new Uint8Array(20))].map((b) => b.toString(16).padStart(2, '0')).join('')
   return `magnet:?xt=urn:btih:${hex}&dn=${encodeURIComponent(name)}`
 }
+
+const bstr = (s: string) => `${Buffer.byteLength(s)}:${s}`
+/** Minimal multi-file .torrent (bencoded by hand). Piece hashes are junk: fine for listing, never downloaded. */
+export function fakeTorrentFile(root: string, files: Record<string, number>): { name: string; mimeType: string; buffer: Buffer } {
+  const total = Object.values(files).reduce((a, b) => a + b, 0)
+  const pieceLen = 16384
+  const pieces = Buffer.alloc(Math.ceil(total / pieceLen) * 20, 7)
+  const list = Object.entries(files).sort(([a], [b]) => a.localeCompare(b)).map(([p, len]) => `d6:lengthi${len}e4:pathl${p.split('/').map(bstr).join('')}ee`).join('')
+  const head = `d4:infod5:filesl${list}e4:name${bstr(root)}12:piece lengthi${pieceLen}e6:pieces${pieces.length}:`
+  return { name: `${root}.torrent`, mimeType: 'application/x-bittorrent', buffer: Buffer.concat([Buffer.from(head), pieces, Buffer.from('ee')]) }
+}

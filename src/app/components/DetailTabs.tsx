@@ -1,6 +1,9 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { detailsApi, type FilePriority } from '@/api/details'
+import { buildFileTree, nodeProgress, visibleNodes, type FileNode } from '@/domain/files'
 import { formatBytes, formatPercent, formatSpeed } from '@/domain/format'
+import { ChevronDownIcon, ChevronRightIcon } from '../icons'
+import { Icon } from './Icon'
 import { run } from '../actions/run'
 import { useDetailData, type Loaded } from '../useDetailData'
 import { FileIcon } from './FileIcon'
@@ -20,46 +23,96 @@ const PRIORITIES: { value: FilePriority; label: string }[] = [
   { value: 7, label: 'Maximal' },
 ]
 
+function PriorityCell({ node, hash, onChanged }: { node: FileNode; hash: string; onChanged: () => void }) {
+  return (
+    <select
+      className="select--sm"
+      aria-label={`Priority for ${node.name}`}
+      value={node.priority ?? 'mixed'}
+      onChange={(e) => {
+        const p = Number(e.target.value) as FilePriority
+        void run(() => detailsApi.setFilePriority(hash, node.indices, p), {
+          success: node.kind === 'folder' ? `Priority set for ${node.indices.length} files` : `Priority set for ${node.name}`,
+          failure: 'Could not change priority',
+        }).then(onChanged)
+      }}
+    >
+      {node.priority === null && <option value="mixed" disabled>Mixed</option>}
+      {PRIORITIES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+    </select>
+  )
+}
+
+function NameCell({ node, hash, collapsed, toggle, onChanged }: { node: FileNode; hash: string; collapsed: boolean; toggle: () => void; onChanged: () => void }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(node.name)
+  const commit = () => {
+    setEditing(false)
+    const name = draft.trim()
+    if (!name || name === node.name || name.includes('/')) return
+    const slash = node.path.lastIndexOf('/')
+    const newPath = (slash >= 0 ? node.path.slice(0, slash + 1) : '') + name
+    const call = node.kind === 'folder' ? detailsApi.renameFolder : detailsApi.renameFile
+    void run(() => call(hash, node.path, newPath), { success: `Renamed to ${name}`, failure: 'Could not rename' }).then(onChanged)
+  }
+  return (
+    <div className="ftree__name" style={{ paddingLeft: node.depth * 16 }}>
+      {node.kind === 'folder' ? (
+        <button type="button" className="iconbtn iconbtn--sm" aria-expanded={!collapsed} aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${node.name}`} onClick={toggle}>
+          <Icon icon={collapsed ? ChevronRightIcon : ChevronDownIcon} size={14} />
+        </button>
+      ) : <span className="ftree__spacer" />}
+      <FileIcon name={node.name} isDirectory={node.kind === 'folder'} size={16} />
+      {editing ? (
+        <input
+          className="ftree__edit"
+          aria-label={`New name for ${node.name}`}
+          value={draft}
+          autoFocus
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(node.name); setEditing(false) } }}
+        />
+      ) : (
+        <>
+          <span className="ftree__label" title={node.path}>{node.name}</span>
+          <button type="button" className="linkbtn ftree__rename" aria-label={`Rename ${node.name}`} onClick={() => { setDraft(node.name); setEditing(true) }}>Rename</button>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function FilesTab({ hash }: { hash: string }) {
   const load = useCallback((s: AbortSignal) => detailsApi.files(hash, s), [hash])
   const state = useDetailData(`files:${hash}`, load)
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
+  const reload = () => state.status === 'ok' && state.reload()
   return (
     <Async state={state} empty={(d) => d.length === 0}>
-      {(files) => (
-        <table className="dtable">
-          <thead><tr><th>Name</th><th>Size</th><th>Progress</th><th>Priority</th></tr></thead>
-          <tbody>
-            {files.map((f) => {
-              const slash = f.name.lastIndexOf('/')
-              const dir = slash >= 0 ? f.name.slice(0, slash + 1) : ''
-              const base = f.name.slice(slash + 1)
-              return (
-                <tr key={f.index} data-skipped={f.priority === 0 || undefined}>
-                  <td className="dtable__name" title={f.name}>
-                    <FileIcon name={base} size={16} />
-                    <span>{dir && <span className="muted">{dir}</span>}{base}</span>
+      {(files) => {
+        const rows = visibleNodes(buildFileTree(files), collapsed)
+        return (
+          <table className="dtable">
+            <thead><tr><th>Name</th><th>Size</th><th>Progress</th><th>Priority</th></tr></thead>
+            <tbody>
+              {rows.map((n) => (
+                <tr key={n.path} data-skipped={n.priority === 0 || undefined}>
+                  <td className="dtable__name">
+                    <NameCell
+                      node={n} hash={hash} collapsed={collapsed.has(n.path)} onChanged={reload}
+                      toggle={() => setCollapsed((c) => { const x = new Set(c); if (x.has(n.path)) x.delete(n.path); else x.add(n.path); return x })}
+                    />
                   </td>
-                  <td className="num">{formatBytes(f.size)}</td>
-                  <td><Progress value={f.progress} variant="bar" /></td>
-                  <td>
-                    <select
-                      className="select select--sm"
-                      aria-label={`Priority for ${base}`}
-                      value={f.priority}
-                      onChange={(e) => {
-                        const p = Number(e.target.value) as FilePriority
-                        void run(() => detailsApi.setFilePriority(hash, [f.index], p), { success: `Priority set for ${base}`, failure: 'Could not change priority' }).then(() => state.status === 'ok' && state.reload())
-                      }}
-                    >
-                      {PRIORITIES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-                    </select>
-                  </td>
+                  <td className="num">{formatBytes(n.size)}</td>
+                  <td><Progress value={nodeProgress(n)} variant="bar" /></td>
+                  <td><PriorityCell node={n} hash={hash} onChanged={reload} /></td>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      )}
+              ))}
+            </tbody>
+          </table>
+        )
+      }}
     </Async>
   )
 }

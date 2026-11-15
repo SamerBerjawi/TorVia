@@ -495,3 +495,11 @@
 .dtable tr[data-skipped] td { opacity: .55; }
 .select--sm { height: 26px; font-size: 12px; }
 .select--sm { padding: 0 6px; border: 1px solid var(--border-strong, var(--border)); border-radius: var(--r-md); background: var(--surface); color: var(--text); }
+.ftree__name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ftree__spacer { width: 24px; flex: none; }
+.ftree__label { overflow-wrap: anywhere; }
+.ftree__rename { margin-left: auto; opacity: 0; }
+.dtable tr:hover .ftree__rename, .ftree__rename:focus-visible { opacity: 1; }
+.ftree__edit { flex: 1; min-width: 0; padding: 3px 6px; border: 1px solid var(--accent); border-radius: var(--r-md); background: var(--input); color: var(--text); font: 12px var(--font-ui); }
+.iconbtn--sm { width: 24px; height: 24px; flex: none; }
+@media (hover: none) { .ftree__rename { opacity: 1; } }
