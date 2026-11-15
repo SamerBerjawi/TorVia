@@ -4,6 +4,10 @@ All notable changes to Torvia are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-15
+
+Fixes finding the similar-torrent search (it was hidden when search wasn't set up), adds a search plugin manager, and lets you choose how long an idle sign-in lasts.
+
 ### Added
 - **Sign out after being idle:** *Settings → Sign-in* lets you choose how many minutes of inactivity end your sign-in (1 minute to 1 year), or switch it off with **Never sign out**. It changes qBittorrent's own session timeout (default 60 minutes), so it also applies when the browser is closed. Torvia keeps polling while it is open, so the timer mostly matters after a tab is closed or a device sleeps.
 - **Search plugin manager** on the Search page: see installed plugins, enable or disable them, update them, uninstall, install qBittorrent's official plugins in one click, or install one from an https address. Every install asks first, because a plugin is a Python program qBittorrent downloads and runs on the server (a custom address gets a stronger warning). The panel also explains that search needs Python 3 on the qBittorrent machine and at least one enabled plugin.
@@ -89,7 +93,8 @@ First public preview. A complete alternative WebUI for qBittorrent 5.0 or newer:
 - Speed history charts start when the page opens; qBittorrent does not provide history.
 - System notifications need HTTPS or localhost; over plain HTTP only in-page messages are available.
 
-[Unreleased]: https://github.com/SamerBerjawi/torvia/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/SamerBerjawi/torvia/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/SamerBerjawi/torvia/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/SamerBerjawi/torvia/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/SamerBerjawi/torvia/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/SamerBerjawi/torvia/releases/tag/v0.1.0
