@@ -4,6 +4,9 @@ All notable changes to Torvia are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+### Added
+- **Peers tab:** a Country column with the flag and two-letter code for each peer (hover for the country name). Peers on private addresses show a dash; if none of the peers has a country, a note explains how to turn on *Resolve peer countries* in qBittorrent. The 257 flags ship inside the app (flag-icons, MIT), so nothing is fetched from the internet; this adds about 0.9 MB to the download.
+
 ### Fixed
 - **`docker/compose.yml`:** the Torvia installer step no longer stops qBittorrent from starting when GitHub can't be reached (for example a NAS booting before its network is up). It retries, then keeps the installed version and exits cleanly. Files are now owned by the same user as qBittorrent.
 

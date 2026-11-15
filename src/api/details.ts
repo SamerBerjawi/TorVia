@@ -26,6 +26,8 @@ export interface Peer {
   client?: string
   connection?: string
   country_code?: string
+  /** Display name, e.g. "Belgium". */
+  country?: string
   dl_speed: number
   up_speed: number
   downloaded: number

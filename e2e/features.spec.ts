@@ -256,3 +256,56 @@ test('update notice: stays quiet when up to date and when GitHub is unreachable'
   await expect(about).toContainText('Couldn’t check')
   await expect(page.getByText(/is available/)).toHaveCount(0)
 })
+
+test('peers tab: country flags (rendering uses a stubbed peer list; the flag files come from the real server)', async ({ page }) => {
+  // A test qBittorrent cannot have peers with public IPs, so the one request that carries peer data is stubbed
+  // (same JSON shape as qBittorrent's sync/torrentPeers). Everything else, including serving the flags, is real.
+  const peer = (ip: string, country: string, country_code: string, dl = 0) => ({ ip, port: 6881, client: 'qBittorrent/5.0.0', connection: 'BT', country, country_code, dl_speed: dl, up_speed: 0, downloaded: 0, uploaded: 0, progress: 0.5, flags: 'D' })
+  const errors = trackErrors(page)
+  await setAppearance(page, 'graphite')
+  await signIn(page)
+  // The flags are static files in the app folder.
+  const flag = await page.request.get('/flags/be.svg')
+  expect(flag.ok()).toBe(true)
+  expect(flag.headers()['content-type']).toMatch(/svg/)
+  expect((await page.request.get('/flags/zz-not-a-flag.svg')).ok()).toBe(false)
+
+  const name = `a-flags-${Date.now()}.iso`
+  await page.keyboard.press('n')
+  const add = page.getByRole('dialog', { name: 'Add torrents' })
+  await add.getByLabel(/magnet links or urls/i).fill(fakeMagnet(name))
+  await add.getByLabel('Start torrent').uncheck()
+  await add.getByRole('button', { name: /add stopped/i }).click()
+  const row = page.getByRole('grid', { name: 'Torrents' }).getByRole('row').filter({ hasText: name })
+  await expect(row).toBeVisible({ timeout: 15_000 })
+  await row.click()
+  await page.getByRole('button', { name: 'Show details' }).click()
+  const peers = page.getByRole('complementary', { name: 'Torrent details' })
+
+  await page.route('**/api/v2/sync/torrentPeers**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ full_update: true, rid: 1, show_flags: true, peers: {
+    '81.164.0.1:6881': peer('81.164.0.1', 'Belgium', 'be', 500),
+    '8.8.8.8:6881': peer('8.8.8.8', 'United States', 'us', 100),
+    '192.168.1.20:6881': peer('192.168.1.20', '', ''), // private address: no country
+    '1.2.3.4:6881': peer('1.2.3.4', 'Nowhere', 'zz'), // no such flag file: must not show a broken image
+  } }) }))
+  await peers.getByRole('tab', { name: 'Peers' }).click()
+  const be = peers.getByRole('row').filter({ hasText: '81.164.0.1' })
+  await expect(be).toBeVisible()
+  await expect(be.getByText('Belgium')).toBeAttached() // accessible name
+  await expect(be.locator('.peerflag')).toHaveAttribute('title', 'Belgium')
+  await expect(be.locator('.peerflag img')).toHaveJSProperty('complete', true)
+  expect(await be.locator('.peerflag img').evaluate((i: HTMLImageElement) => i.naturalWidth)).toBeGreaterThan(0)
+  await expect(peers.getByRole('row').filter({ hasText: '8.8.8.8' }).getByText('United States')).toBeAttached()
+  await expect(peers.getByRole('row').filter({ hasText: '192.168.1.20' }).getByLabel('Unknown country')).toBeVisible()
+  await expect(peers.getByRole('row').filter({ hasText: '1.2.3.4' }).locator('.peerflag img')).toHaveCount(0, { timeout: 5000 }) // 404 flag is dropped
+  await expect(peers.getByText('No countries reported')).toHaveCount(0)
+
+  // Peers without any country (GeoIP off) get an explanation instead of a column of dashes.
+  await page.unroute('**/api/v2/sync/torrentPeers**')
+  await page.route('**/api/v2/sync/torrentPeers**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ full_update: true, rid: 1, peers: { '10.0.0.5:6881': peer('10.0.0.5', '', '') } }) }))
+  await expect(peers.getByText('No countries reported')).toBeVisible({ timeout: 10_000 })
+  await page.unroute('**/api/v2/sync/torrentPeers**')
+  await row.click(); await page.keyboard.press('Delete')
+  await page.getByRole('alertdialog').getByRole('button', { name: /^remove/i }).click()
+  expect(errors.filter((e) => !/Failed to load resource/.test(e))).toEqual([])
+})

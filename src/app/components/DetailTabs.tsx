@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
-import { detailsApi, type FilePriority } from '@/api/details'
+import { detailsApi, type FilePriority, type Peer } from '@/api/details'
+import { countriesUnavailable, peerCountry } from '@/domain/country'
 import { buildFileTree, nodeProgress, visibleNodes, type FileNode } from '@/domain/files'
 import { formatBytes, formatPercent, formatSpeed } from '@/domain/format'
 import { ChevronDownIcon, ChevronRightIcon, RenameIcon } from '../icons'
@@ -145,27 +146,47 @@ export function TrackersTab({ hash }: { hash: string }) {
   )
 }
 
+/** Flag + code for a peer; the full country name is the tooltip and the accessible name. Empty for private/unknown addresses. */
+function PeerFlag({ peer }: { peer: Peer }) {
+  const [broken, setBroken] = useState(false)
+  const c = peerCountry(peer)
+  if (!c) return <span className="muted" aria-label="Unknown country">—</span>
+  return (
+    <span className="peerflag" title={c.name}>
+      {!broken && <img src={`flags/${c.code}.svg`} alt="" width={20} height={15} loading="lazy" onError={() => setBroken(true)} />}
+      <span className="sr-only">{c.name}</span>
+      <span aria-hidden="true">{c.code.toUpperCase()}</span>
+    </span>
+  )
+}
+
 export function PeersTab({ hash }: { hash: string }) {
   const load = useCallback((s: AbortSignal) => detailsApi.peers(hash, s), [hash])
   const state = useDetailData(`peers:${hash}`, load, 3000)
   return (
     <Async state={state} empty={(d) => d.length === 0}>
       {(rows) => (
-        <table className="dtable">
-          <thead><tr><th>Address</th><th>Client</th><th>Progress</th><th>Down</th><th>Up</th><th>Flags</th></tr></thead>
-          <tbody>
-            {[...rows].sort((a, b) => b.dl_speed + b.up_speed - (a.dl_speed + a.up_speed)).map((p) => (
-              <tr key={`${p.ip}:${p.port}`}>
-                <td className="num">{p.ip}:{p.port}</td>
-                <td className="muted">{p.client || '—'}</td>
-                <td className="num">{formatPercent(p.progress)}</td>
-                <td className="num">{formatSpeed(p.dl_speed)}</td>
-                <td className="num">{formatSpeed(p.up_speed)}</td>
-                <td className="muted">{p.flags || '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <>
+          <table className="dtable">
+            <thead><tr><th>Country</th><th>Address</th><th>Client</th><th>Progress</th><th>Down</th><th>Up</th><th>Flags</th></tr></thead>
+            <tbody>
+              {[...rows].sort((a, b) => b.dl_speed + b.up_speed - (a.dl_speed + a.up_speed)).map((p) => (
+                <tr key={`${p.ip}:${p.port}`}>
+                  <td><PeerFlag peer={p} /></td>
+                  <td className="num">{p.ip}:{p.port}</td>
+                  <td className="muted">{p.client || '—'}</td>
+                  <td className="num">{formatPercent(p.progress)}</td>
+                  <td className="num">{formatSpeed(p.dl_speed)}</td>
+                  <td className="num">{formatSpeed(p.up_speed)}</td>
+                  <td className="muted">{p.flags || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {countriesUnavailable(rows) && (
+            <p className="muted peerflag__hint">No countries reported. Turn on <strong>Resolve peer countries</strong> in <a href="#/settings">Settings → Advanced</a> (private addresses never have one).</p>
+          )}
+        </>
       )}
     </Async>
   )

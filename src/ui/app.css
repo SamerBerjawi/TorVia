@@ -682,3 +682,8 @@
 .banner__spacer { flex: 1; }
 .compatbar { flex: none; }
 @media (max-width: 640px) { .dtable--files { min-width: 660px; } .dtable--files .c-size { width: 80px; } .dtable--files .c-progress { width: 110px; } .dtable--files .c-prio { width: 104px; } }
+
+/* peer country flags */
+.peerflag { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-family: var(--font-num); font-size: 11px; color: var(--text-3); }
+.peerflag img { width: 20px; height: 15px; border-radius: 2px; box-shadow: 0 0 0 1px var(--border-strong); object-fit: cover; flex: none; }
+.peerflag__hint { margin: 10px 12px; font-size: 12px; }

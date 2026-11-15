@@ -78,3 +78,6 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 
 ## Update check
 - `app/updates.ts` + `domain/version.ts`: the only request outside qBittorrent (anonymous GitHub releases API, daily, user can disable). The app page CSP allows exactly `https://api.github.com` for it. The running version comes from `package.json` via Vite `define` (`__TORVIA_VERSION__`). E2E stubs only this request (default in `e2e/helpers.ts` `setAppearance`).
+
+## Country flags
+- Peers tab shows `flags/<cc>.svg` (flag-icons, MIT), copied into `dist/torvia/private/flags` by `scripts/copy-flags.mjs` as part of `build:app` (not committed). The country code goes into an image URL, so it is validated by `domain/country.ts` (exactly two ASCII letters) before use; a missing file hides the image. qBittorrent only reports countries when *Resolve peer countries* is on. The E2E flag test stubs only the peers response (a test server has no public-IP peers); keep that to this one request.
