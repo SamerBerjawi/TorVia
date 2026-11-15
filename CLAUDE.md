@@ -70,7 +70,7 @@ Three skins — `graphite`, `paper`, `signal` — each with light and dark, sele
 - `app/logs` (log/main, incremental `last_known_id`), `app/rss` (feeds, articles, auto-download rules), `app/search` (search plugins; needs Python on the server), `app/creator` (torrentcreator; server-side source path). Pure logic is in `domain/{logs,rss,search,creator}.ts` with tests; API wrappers in `api/`.
 - Endpoints that may not exist on older qBittorrent (torrent creator) are probed by calling them: a 404 shows an explanation, never a broken page.
 - Notifications: `app/notifications.ts` (opt-in, Settings). PWA: manifest + icons in `public-assets/` (regenerate PNGs with `scripts/gen-icons.mjs`); deliberately **no service worker** (ADR 0012).
-- Decisions live in `docs/adr/`; accessibility gates and the manual checklist in `docs/accessibility.md`. Run the axe audit with `pnpm e2e e2e/a11y.spec.ts` (set `A11Y_REPORT=path.tsv` to collect everything).
+- Decisions live in `docs/adr/`; accessibility gates and the manual checklist in `docs/accessibility.md`. Run the axe audit with `pnpm e2e:a11y` (set `A11Y_REPORT=path.tsv` to collect everything).
 
 ## Changelog and screenshots
 - Every release needs a `## [x.y.z]` section in `CHANGELOG.md` (Keep a Changelog). `scripts/release-notes.mjs` turns it into the GitHub release notes and fails without it; a unit test checks the current `package.json` version has an entry. Add user-visible changes under `## [Unreleased]` as you go.
