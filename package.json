@@ -1,0 +1,33 @@
+{
+  "name": "nuvora",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Next-generation alternative WebUI for qBittorrent",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "vite --mode app --port 5173",
+    "dev:login": "vite --mode login --port 5174",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build:login": "vite build --mode login",
+    "build:app": "vite build --mode app",
+    "build": "pnpm build:login && pnpm build:app && node scripts/guard-package.mjs",
+    "check": "pnpm typecheck && pnpm test && pnpm build",
+    "package": "node scripts/make-zip.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.14.26",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  }
+}
