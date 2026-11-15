@@ -16,6 +16,8 @@ export default defineConfig({
   use: {
     baseURL: process.env['TORVIA_E2E_URL'] ?? 'http://localhost:8080',
     trace: 'off',
+    // Without this a missing control makes click() wait for the whole test timeout.
+    actionTimeout: 15_000,
     viewport: { width: 1440, height: 900 },
   },
 })

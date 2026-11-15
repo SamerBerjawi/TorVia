@@ -7,6 +7,8 @@ import { fakeMagnet, setAppearance, signIn } from './helpers'
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 
 async function audit(page: Page, where: string) {
+  // Never sample mid-transition (fading toasts and menus have transient, meaningless contrast).
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))))
   const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze()
   const summary = violations.map((v) => `${v.id} (${v.impact}) ×${v.nodes.length}: ${v.help}\n    ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join('\n    ')}`)
   // A report of every finding (set A11Y_REPORT=path) makes triage faster than stopping at the first failure.
@@ -18,7 +20,7 @@ const SKINS = ['graphite', 'paper', 'signal'] as const
 const MODES = ['light', 'dark'] as const
 
 test.describe.configure({ mode: 'default' })
-test.setTimeout(600_000)
+test.setTimeout(300_000)
 /** Escape, then let close animations finish so axe never samples a half-faded overlay. */
 const dismiss = async (page: Page) => { await page.keyboard.press('Escape'); await page.waitForTimeout(450) }
 for (const skin of SKINS) {
@@ -38,7 +40,10 @@ for (const skin of SKINS) {
       await audit(page, `${skin}/${mode} torrent list`)
 
       await row.click()
-      await page.getByRole('button', { name: 'Show details' }).click().catch(() => page.keyboard.press('Enter'))
+      // Graphite has a toolbar toggle; Paper and Signal open details with Enter on the focused row.
+      const toggle = page.getByRole('button', { name: 'Show details' })
+      if (await toggle.count()) await toggle.click()
+      else await page.keyboard.press('Enter')
       const details = page.getByRole('complementary', { name: 'Torrent details' })
       for (const tab of ['Overview', 'Files', 'Trackers', 'Peers', 'Statistics']) {
         await details.getByRole('tab', { name: tab }).click()
