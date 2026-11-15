@@ -57,11 +57,11 @@
 
 /* Segmented control (Paper toolbar, appearance mode) */
 .segmented { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; border-radius: 8px; background: var(--input); }
-.segmented > button, .segmented__opt { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text-3); cursor: pointer; white-space: nowrap; }
+.segmented > button, .segmented__opt { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text-3); cursor: pointer; white-space: nowrap; }
 .segmented > button[aria-pressed='true'], .segmented__opt:has(input:checked) { background: var(--segment, var(--raised)); box-shadow: var(--segment-shadow, none); color: var(--text); font-weight: 500; }
 .segmented > button[data-tone='err'] { color: var(--danger); }
 .segmented__count { color: var(--text-4); font-weight: 400; }
-.segmented__opt input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented__opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .segmented__opt:has(input:focus-visible) { outline: 2px solid var(--focus); }
 
 /* ── Table ─────────────────────────────────────────────── */
@@ -151,7 +151,7 @@
 .skinpick__opt { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px; border: 1px solid var(--border-strong); border-radius: var(--r-md); color: var(--text-2); cursor: pointer; font-size: 12px; }
 .skinpick__opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); color: var(--text); font-weight: 500; }
 .skinpick__opt:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
-.skinpick__opt input { position: absolute; opacity: 0; pointer-events: none; }
+.skinpick__opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .skinpick__swatch { display: flex; width: 100%; height: 28px; border-radius: 5px; overflow: hidden; border: 1px solid var(--border); }
 .skinpick__swatch i { flex: 1; }
 [data-skin-preview='graphite'] i:nth-child(1) { background: #111214; } [data-skin-preview='graphite'] i:nth-child(2) { background: #1e1f33; } [data-skin-preview='graphite'] i:nth-child(3) { background: #8b8cf8; }
@@ -622,13 +622,13 @@
 @media (max-width: 800px) { .rss__split { grid-template-columns: 1fr; } }
 
 /* search */
-.search { max-width: 1200px; margin: 0 auto; padding: 0 20px 20px; height: 100%; display: flex; flex-direction: column; }
-.search__form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-.search__form input { flex: 1 1 240px; }
-.search__form :is(input, select), .search__bar input { height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--input); color: var(--text); font: 13px var(--font-ui); }
-.search__bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 0 10px; color: var(--text-3); }
-.search__num { width: 64px; }
-.search__results { flex: 1; min-height: 0; overflow: auto; }
+.searchpage { max-width: 1200px; margin: 0 auto; padding: 0 20px 20px; height: 100%; display: flex; flex-direction: column; }
+.searchpage__form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.searchpage__form input { flex: 1 1 240px; }
+.searchpage__form :is(input, select), .searchpage__bar input { height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--input); color: var(--text); font: 13px var(--font-ui); }
+.searchpage__bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 0 10px; color: var(--text-3); }
+.searchpage__num { width: 64px; }
+.searchpage__results { flex: 1; min-height: 0; overflow: auto; }
 .thsort { all: unset; cursor: pointer; }
 .thsort:focus-visible { outline: 2px solid var(--focus); }
 
@@ -640,3 +640,20 @@
 .create__tasks { list-style: none; margin: 0; padding: 0; }
 .create__tasks li { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .create__path { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; color: var(--text); }
+
+/* appearance picker (Settings) */
+.appearance-pick { display: grid; gap: 14px; padding: 6px 0 10px; }
+.appearance-pick .menu__group { margin: 0; padding: 0; border: 0; }
+.appearance-pick legend { padding: 0 0 6px; font: 600 12px var(--font-ui); color: var(--text-3); }
+.appearance-pick .skinpick { gap: 12px; }
+.appearance-pick .skinpick__opt { align-items: stretch; padding: 10px; gap: 8px; text-align: left; }
+.appearance-pick .skinpick__swatch { height: 44px; }
+.skinpick__blurb { font-weight: 400; font-size: 12px; color: var(--text-3); }
+.btn--icon-label .btn__label { display: none; }
+@media (min-width: 1100px) { .btn--icon-label .btn__label { display: inline; } }
+@media (max-width: 640px) { .appearance-pick .skinpick { grid-template-columns: 1fr; } }
+
+/* Tab-style route nav (Paper): only the current section keeps a visible label until there is room for all. */
+.routenav--tabs a:not([aria-current='page']) .routenav__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (min-width: 1500px) { .routenav--tabs a:not([aria-current='page']) .routenav__label { position: static; width: auto; height: auto; overflow: visible; clip: auto; } }
+[data-skin='paper'] .btn--icon-label .btn__label { display: none; }

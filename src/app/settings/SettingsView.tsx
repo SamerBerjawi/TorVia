@@ -2,9 +2,8 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { preferencesApi, type Preferences } from '@/api/preferences'
 import { ApiError } from '@/api/transport'
 import { diffPrefs, fromDisplay, isActive, SECTIONS, toDisplay, validateField, visibleFields, type Field } from '@/domain/settingsSchema'
-import { MODE_LABEL, MODES, SKIN_LABEL, SKINS, setAppearance } from '@/ui/theme'
 import { run } from '../actions/run'
-import { useAppearance } from '../hooks'
+import { AppearancePicker } from '../components/AppearancePicker'
 import { LibrarySection } from './LibrarySection'
 import { setNotifyMode, systemNotificationsAvailable, useNotifyMode, type NotifyMode } from '../notifications'
 
@@ -53,20 +52,12 @@ function FieldRow({ field, value, disabled, error, onChange }: { field: Field; v
 }
 
 function AppearanceSection() {
-  const a = useAppearance()
   const notify = useNotifyMode()
   return (
     <section className="settings__section" aria-labelledby="sec-appearance" data-section="appearance">
-      <h2 id="sec-appearance">Torvia (this browser)</h2>
-      <p className="settings__note">Saved in this browser only.</p>
-      <div className="setting">
-        <label className="setting__label" htmlFor="set-skin">Skin</label>
-        <div className="setting__control">
-          <select id="set-skin" value={a.skin} onChange={(e) => setAppearance({ skin: e.target.value as typeof a.skin })}>
-            {SKINS.map((s) => <option key={s} value={s}>{SKIN_LABEL[s]}</option>)}
-          </select>
-        </div>
-      </div>
+      <h2 id="sec-appearance">Appearance</h2>
+      <p className="settings__note">Pick a style and a mode. Saved in this browser only; also available from the Appearance button and the command palette (Ctrl/⌘ K).</p>
+      <div className="appearance-pick"><AppearancePicker describe /></div>
       <div className="setting">
         <label className="setting__label" htmlFor="set-notify">
           When a download finishes
@@ -77,14 +68,6 @@ function AppearanceSection() {
             <option value="off">Do nothing</option>
             <option value="toast">Show a message in Torvia</option>
             {systemNotificationsAvailable() && <option value="system">Send a system notification</option>}
-          </select>
-        </div>
-      </div>
-      <div className="setting">
-        <label className="setting__label" htmlFor="set-mode">Mode</label>
-        <div className="setting__control">
-          <select id="set-mode" value={a.mode} onChange={(e) => setAppearance({ mode: e.target.value as typeof a.mode })}>
-            {MODES.map((m) => <option key={m} value={m}>{MODE_LABEL[m]}</option>)}
           </select>
         </div>
       </div>
@@ -151,9 +134,10 @@ export default function SettingsView() {
         <input type="search" className="settings__search" placeholder="Search settings" aria-label="Search settings" value={query} onChange={(e) => setQuery(e.target.value)} />
       </header>
       <nav className="settings__nav" aria-label="Settings sections">
-        {[...SECTIONS.filter((s) => fields.some((f) => f.section === s.id)), ...(query.trim() === '' ? [{ id: 'library', label: 'Categories & tags' }, { id: 'appearance', label: 'Appearance' }] : [])].map((s) => <a key={s.id} href={`#/settings/${s.id}`} onClick={(e) => { e.preventDefault(); document.getElementById(`sec-${s.id}`)?.scrollIntoView({ block: 'start' }) }}>{s.label}</a>)}
+        {[...(query.trim() === '' ? [{ id: 'appearance', label: 'Appearance' }] : []), ...SECTIONS.filter((s) => fields.some((f) => f.section === s.id)), ...(query.trim() === '' ? [{ id: 'library', label: 'Categories & tags' }] : [])].map((s) => <a key={s.id} href={`#/settings/${s.id}`} onClick={(e) => { e.preventDefault(); document.getElementById(`sec-${s.id}`)?.scrollIntoView({ block: 'start' }) }}>{s.label}</a>)}
       </nav>
       <div className="settings__body">
+        {query.trim() === '' && <AppearanceSection />}
         {SECTIONS.map((s) => {
           const list = fields.filter((f) => f.section === s.id)
           if (list.length === 0) return null
@@ -167,7 +151,6 @@ export default function SettingsView() {
           )
         })}
         {query.trim() === '' && <LibrarySection />}
-        {query.trim() === '' && <AppearanceSection />}
         {fields.length === 0 && <p className="panel__empty">No settings match “{query}”.</p>}
         <p className="settings__note">Web UI port, credentials and certificates are not editable here, so a typo can’t lock you out. Change them in qBittorrent itself.</p>
       </div>

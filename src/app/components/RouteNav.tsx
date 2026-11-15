@@ -17,9 +17,9 @@ export function RouteNav({ route, variant }: { route: Route; variant: 'list' | '
   return (
     <nav className={`routenav routenav--${variant}`} aria-label="Sections">
       {ITEMS.map((i) => (
-        <a key={i.route} href={hrefFor(i.route)} aria-current={route === i.route ? 'page' : undefined}>
+        <a key={i.route} href={hrefFor(i.route)} aria-current={route === i.route ? 'page' : undefined} title={i.label}>
           {variant !== 'text' && <Icon icon={i.icon} size={16} />}
-          {variant === 'text' ? i.label.toLowerCase() : i.label}
+          {variant === 'text' ? i.label.toLowerCase() : <span className="routenav__label">{i.label}</span>}
         </a>
       ))}
     </nav>

@@ -73,11 +73,11 @@ export default function SearchView() {
   const sortBy = (key: SearchSort) => setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: key === 'name' ? 'asc' : 'desc' }))
   const aria = (key: SearchSort) => (sort.key === key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined)
 
-  if (loadError) return <div className="search"><h1>Search</h1><p className="panel__empty" role="alert">{loadError}</p></div>
+  if (loadError) return <div className="searchpage"><h1>Search</h1><p className="panel__empty" role="alert">{loadError}</p></div>
   if (!plugins) return <p className="panel__empty" role="status">Loading search…</p>
 
   return (
-    <div className="search">
+    <div className="searchpage">
       <header className="settings__head"><h1>Search</h1></header>
       {enabled.length === 0 ? (
         <p className="panel__empty">
@@ -85,7 +85,7 @@ export default function SearchView() {
         </p>
       ) : (
         <>
-          <form className="search__form" onSubmit={(e) => void start(e)}>
+          <form className="searchpage__form" onSubmit={(e) => void start(e)}>
             <input type="search" aria-label="Search for torrents" placeholder="Search for torrents" value={pattern} onChange={(e) => setPattern(e.target.value)} />
             <select aria-label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -99,15 +99,15 @@ export default function SearchView() {
               : <button type="submit" className="btn btn--accent" disabled={!pattern.trim()}>Search</button>}
           </form>
           {phase.kind !== 'idle' && (
-            <div className="search__bar" role="status">
+            <div className="searchpage__bar" role="status">
               {phase.kind === 'running' ? 'Searching…' : 'Finished.'} {results.length} results{shown.length !== results.length ? `, ${shown.length} shown` : ''}
               <span className="rss__spacer" />
               <input aria-label="Filter results" placeholder="Filter results" value={text} onChange={(e) => setText(e.target.value)} />
-              <label>Min seeders <input type="number" min={0} value={minSeeds} onChange={(e) => setMinSeeds(Math.max(0, Number(e.target.value) || 0))} className="search__num" /></label>
+              <label>Min seeders <input type="number" min={0} value={minSeeds} onChange={(e) => setMinSeeds(Math.max(0, Number(e.target.value) || 0))} className="searchpage__num" /></label>
             </div>
           )}
           {phase.kind !== 'idle' && (
-            <div className="search__results">
+            <div className="searchpage__results">
               <table className="dtable">
                 <thead>
                   <tr>

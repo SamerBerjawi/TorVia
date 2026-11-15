@@ -21,7 +21,7 @@ services:
       - sh
       - -ec
       - |
-        REPO=SamerBerjawi/nuvora
+        REPO=SamerBerjawi/torvia
         if [ "$$TORVIA_VERSION" = latest ]; then URL="https://github.com/$$REPO/releases/latest/download/torvia.zip"
         else URL="https://github.com/$$REPO/releases/download/v$${TORVIA_VERSION#v}/torvia.zip"; fi
         cd /config

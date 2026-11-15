@@ -9,7 +9,7 @@ Torvia is just a folder of files. Download it, put it in your qBittorrent folder
 
 ### Existing qBittorrent installation (Windows, macOS, Linux, NAS)
 
-1. Download **`torvia.zip`** from the [latest release](https://github.com/SamerBerjawi/nuvora/releases/latest) and extract it. You get one folder, `torvia`, containing `public` and `private`.
+1. Download **`torvia.zip`** from the [latest release](https://github.com/SamerBerjawi/torvia/releases/latest) and extract it. You get one folder, `torvia`, containing `public` and `private`.
 2. Put that `torvia` folder anywhere qBittorrent can read (for example next to its configuration folder).
 3. In qBittorrent open **Tools → Options → Web UI** and tick **Use alternative WebUI**.
 4. Set **Files location** to the `torvia` folder, the one that *contains* `public`.
@@ -41,7 +41,7 @@ WebUI\RootFolder=/config/torvia
 Every release archive is installed into a fresh qBittorrent and checked by CI before it is published (`e2e/smoke-release.sh`).
 
 ## Features
-- **Three skins, each light & dark** (or follow the system): *Graphite* (sidebar + side details), *Paper* (desktop toolbar + bottom details), *Signal* (query-first console with grouped rows and live speed sparklines). Switch under **Appearance**.
+- **Three skins, each light & dark** (or follow the system): *Graphite* (sidebar + side details), *Paper* (desktop toolbar + bottom details), *Signal* (query-first console with grouped rows and live speed sparklines). Choose under **Settings → Appearance**, from the **Appearance** button (sidebar footer in Graphite, top bar in Paper and Signal), from the command palette (Ctrl/⌘ K → "Style: …"), or on the sign-in page.
 - Virtualised table for large libraries, sortable columns, multi-select (click, ⌘/Ctrl-click, Shift-click), keyboard navigation (↑↓ / j k, Space, Enter, Esc, ⌘/Ctrl-A, `/` or ⌘/Ctrl-K to search).
 - Status views, categories and tags with live counts.
 - Query language in every search box: `ubuntu state:downloading cat:linux tag:4k size:>1GB ratio:<1 progress:>=50 -cat:films`. Signal adds chips, autocomplete and saved views.

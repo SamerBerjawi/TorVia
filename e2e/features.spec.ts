@@ -111,3 +111,27 @@ test('notification preference persists', async ({ page }) => {
   await expect(page.getByLabel(/When a download finishes/)).toHaveValue('toast')
   await page.getByLabel(/When a download finishes/).selectOption('off')
 })
+
+test('style and mode can be chosen from the sign-in page, Settings and the Appearance menu', async ({ page }) => {
+  const html = page.locator('html')
+  // No setAppearance() here: its init script would reset the choice on every page load, including the reload after sign-in.
+  await page.goto('/')
+  await page.getByLabel('Style').selectOption('paper')
+  await expect(html).toHaveAttribute('data-skin', 'paper')
+  await page.getByLabel('Mode').selectOption('light')
+  await expect(html).toHaveAttribute('data-mode', 'light')
+  await page.getByLabel('Username').fill('admin')
+  await page.getByLabel('Password').fill('torvia-e2e-password')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page.getByRole('grid', { name: 'Torrents' })).toBeVisible()
+  await expect(html).toHaveAttribute('data-skin', 'paper') // remembered after sign-in
+  await page.getByRole('link', { name: 'Settings' }).click()
+  const picker = page.locator('[data-section="appearance"]')
+  await picker.getByLabel(/^Signal/).check()
+  await expect(html).toHaveAttribute('data-skin', 'signal')
+  await picker.getByLabel('Dark').check()
+  await expect(html).toHaveAttribute('data-mode', 'dark')
+  await page.getByRole('button', { name: 'Appearance' }).click()
+  await page.getByRole('dialog', { name: 'Appearance' }).getByLabel(/^Graphite/).click()
+  await expect(html).toHaveAttribute('data-skin', 'graphite')
+})

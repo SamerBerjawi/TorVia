@@ -8,7 +8,7 @@ import { execFileSync } from 'node:child_process'
 import { copyFileSync, readFileSync, writeFileSync } from 'node:fs'
 const root = new URL('../', import.meta.url)
 const { version } = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'))
-const repo = process.env['GITHUB_REPOSITORY'] ?? 'SamerBerjawi/nuvora'
+const repo = process.env['GITHUB_REPOSITORY'] ?? 'SamerBerjawi/torvia'
 const dist = new URL('dist/', root)
 
 writeFileSync(new URL('torvia/version.json', dist), JSON.stringify({ version }) + '\n')

@@ -1,7 +1,7 @@
 import { StrictMode, useState, type FormEvent } from 'react'
 import { createRoot } from 'react-dom/client'
 import { login, type LoginResult } from '@/api/auth'
-import { initAppearance } from '@/ui/theme'
+import { MODES, MODE_LABEL, SKINS, SKIN_LABEL, getAppearance, initAppearance, setAppearance, type Mode, type Skin } from '@/ui/theme'
 import '@/ui/tokens.css'
 import '@/ui/login.css'
 
@@ -12,6 +12,7 @@ const MESSAGES: Record<Exclude<LoginResult, 'ok'>, string> = {
 }
 
 function Login() {
+  const [look, setLook] = useState(getAppearance())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -49,6 +50,18 @@ function Login() {
         {error && <p className="error" role="alert">{error}</p>}
         <button type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
+      <div className="style-row">
+        <label>Style
+          <select value={look.skin} onChange={(e) => { setAppearance({ skin: e.target.value as Skin }); setLook(getAppearance()) }}>
+            {SKINS.map((s) => <option key={s} value={s}>{SKIN_LABEL[s]}</option>)}
+          </select>
+        </label>
+        <label>Mode
+          <select value={look.mode} onChange={(e) => { setAppearance({ mode: e.target.value as Mode }); setLook(getAppearance()) }}>
+            {MODES.map((m) => <option key={m} value={m}>{MODE_LABEL[m]}</option>)}
+          </select>
+        </label>
+      </div>
     </main>
   )
 }
